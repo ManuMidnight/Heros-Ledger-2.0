@@ -20,7 +20,6 @@
         .login-overlay { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.95); display: flex; justify-content: center; align-items: center; overflow-y: auto; touch-action: pan-y; }
         .scroll-box { background: #212121; padding: 20px; border: 4px solid var(--stone); border-radius: 8px; width: 85%; max-width: 350px; text-align: center; }
         
-        /* CORREZIONE SUSSURRO MULTIPLO E INPUT GENERALI */
         input, select { background: #424242; color: white; border: 1px solid #757575; padding: 10px; margin: 5px 0; width: 100%; box-sizing: border-box; font-size: 16px; border-radius: 4px; }
         input[type="checkbox"], input[type="radio"] { width: auto !important; margin: 0 5px 0 0 !important; transform: scale(1.2); cursor: pointer; }
         
@@ -45,8 +44,6 @@
         .pg-tag { background: var(--parchment); color: #3e2723; border: 2px solid var(--gold); padding: 5px 10px; border-radius: 5px; min-width: 140px; display: flex; align-items: center; gap: 8px; position: relative; flex-shrink: 0; transition: all 0.3s; }
         .npc-tag { border-color: #b71c1c; background: #ef9a9a; }
         .boss-tag { border: 3px solid #ffd700 !important; background: linear-gradient(135deg, #fff3b0 0%, #f5e1b6 50%, #fff3b0 100%); box-shadow: 0 0 10px #ffca28; animation: boss-shine 3s infinite; }
-        
-        /* CORREZIONE UI MORTE: Oscura l'intera card */
         .dead-tag { filter: grayscale(100%) brightness(0.4); border-color: #222 !important; background: #555 !important; color: #ccc !important; }
 
         @keyframes boss-shine { 0% { filter: brightness(1); } 50% { filter: brightness(1.2); } 100% { filter: brightness(1); } }
@@ -93,36 +90,44 @@
         #initiative-tracker { background: rgba(183, 28, 28, 0.8); color: white; padding: 8px 10px; font-size: 0.8rem; display: none; overflow-x: auto; white-space: nowrap; border-bottom: 2px solid var(--gold); overscroll-behavior-x: contain; }
         .init-token { display: inline-block; background: #212121; border: 1px solid var(--amber); padding: 3px 8px; margin-right: 6px; border-radius: 12px; font-weight: bold; }
 
-        /* MAPPA E LIGHTBOX */
-        #pinned-map-container { display: none; background: #151515; padding: 8px; border-bottom: 2px solid var(--gold); position: relative; text-align: center; }
-        #pinned-map-img { max-width: 100%; max-height: 150px; object-fit: contain; border: 1px solid var(--gold); border-radius: 4px; cursor: pointer; }
-        #pinned-map-title { font-size: 0.75rem; color: var(--amber); margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center; padding: 0 10px; }
+        /* PULSANTE APRI MAPPA OTTIMIZZATO (Sostituisce l'anteprima ingombrante) */
+        #pinned-map-container { display: none; background: #151515; padding: 10px; border-bottom: 2px solid var(--gold); text-align: center; }
+        .btn-open-map { width: 100%; padding: 15px; font-size: 1.1rem; background: linear-gradient(135deg, #b8860b 0%, #ffca28 50%, #b8860b 100%); color: #000; border: 2px solid white; border-radius: 8px; cursor: pointer; font-weight: bold; text-shadow: 1px 1px 2px rgba(255,255,255,0.5); box-shadow: 0 4px 6px rgba(0,0,0,0.5); transition: transform 0.1s; }
+        .btn-open-map:active { transform: scale(0.98); }
 
         #map-lightbox-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: none; flex-direction: column; }
-        #zoom-container { flex: 1; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; touch-action: none; }
+        #zoom-container { flex: 1; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; touch-action: none; background: #111; }
         #map-wrapper { position: relative; transform-origin: center center; }
-        #zoomable-img { max-width: 100vw; max-height: 75vh; display: block; border: 2px solid var(--gold); user-select: none; -webkit-user-drag: none; }
         
-        #fog-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+        /* FIX TAGLIO MAPPA: object-fit contain e dimensioni massime dello schermo */
+        #zoomable-img { max-width: 100vw; max-height: 80vh; display: block; object-fit: contain; border: 2px solid var(--gold); user-select: none; -webkit-user-drag: none; }
+        
+        #fog-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; transition: opacity 0.3s; }
         #token-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
         #ping-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; }
 
-        .token-wrapper { position: absolute; pointer-events: auto; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; }
-        .map-token { border-radius: 50%; border: 2px solid var(--amber); object-fit: cover; box-shadow: 0 2px 5px rgba(0,0,0,0.8); user-select: none; -webkit-user-drag: none; pointer-events: none; }
-        .token-name-plate { background: rgba(0,0,0,0.8); border: 1px solid var(--amber); color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; white-space: nowrap; margin-bottom: 4px; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+        .token-wrapper { position: absolute; pointer-events: auto; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; transition: opacity 0.3s; }
+        .map-token { border-radius: 50%; border: 2px solid var(--amber); object-fit: cover; box-shadow: 0 2px 5px rgba(0,0,0,0.8); user-select: none; -webkit-user-drag: none; pointer-events: none; background: #222; }
+        .token-name-plate { background: rgba(0,0,0,0.8); border: 1px solid var(--amber); color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; white-space: nowrap; margin-bottom: 4px; opacity: 0; transition: opacity 0.2s; pointer-events: none; font-weight: bold; text-shadow: 1px 1px 0px black; }
         .token-wrapper:active .token-name-plate, .token-wrapper.active-drag .token-name-plate { opacity: 1; }
 
         .ping-indicator { position: absolute; width: 24px; height: 24px; background: rgba(255, 0, 0, 0.5); border: 2px solid red; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; animation: ping-pulse 1s ease-out infinite; z-index: 50; }
         .ping-label { position: absolute; background: rgba(0,0,0,0.8); color: white; font-size: 0.7rem; padding: 2px 4px; border-radius: 3px; transform: translate(-50%, -150%); pointer-events: none; border: 1px solid var(--gold); white-space: nowrap; z-index: 51; }
         @keyframes ping-pulse { 0% { width: 10px; height: 10px; opacity: 1; } 100% { width: 60px; height: 60px; opacity: 0; } }
 
-        #map-controls-bar { background: var(--stone); padding: 10px; border-top: 2px solid var(--gold); display: flex; flex-direction: column; gap: 8px; }
-        .map-btn-row { display: flex; gap: 10px; justify-content: center; }
-        .master-fog-controls { background: #2c1d1a; padding: 8px; border-radius: 5px; display: none; flex-direction: column; gap: 8px; align-items: center; border: 1px solid var(--gold); }
-        .active-tool { background: #4caf50 !important; color: white !important; border: 2px solid white !important; }
+        /* UI MAPPA OTTIMIZZATA */
+        #map-controls-bar { background: var(--stone); padding: 8px; border-top: 2px solid var(--gold); display: flex; flex-direction: column; gap: 6px; }
+        .map-btn-row { display: flex; gap: 8px; justify-content: center; align-items: center; }
+        .master-fog-controls { background: #2c1d1a; padding: 8px; border-radius: 5px; display: none; flex-direction: column; gap: 8px; border: 1px solid var(--gold); }
+        .active-tool { background: #4caf50 !important; color: white !important; border: 2px solid white !important; box-shadow: 0 0 5px #4caf50; }
         
-        #map-token-select { background: #222; color: white; border: 1px solid var(--gold); padding: 5px; border-radius: 4px; width: 150px; }
-        .map-tab-btn { background: #444; color: white; border: 1px solid var(--gold); padding: 5px 10px; cursor: pointer; border-radius: 4px; }
+        .compact-controls { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; align-items: center; width: 100%; }
+        .compact-controls button, .compact-controls select { padding: 6px; font-size: 0.75rem; margin: 0; }
+        #map-token-select { background: #222; color: white; border: 1px solid var(--gold); border-radius: 4px; width: 130px; }
+        .slider-group { display: flex; align-items: center; gap: 5px; color: var(--amber); font-size: 0.65rem; background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 4px; }
+        .slider-group input[type="range"] { width: 80px; margin: 0; }
+
+        .map-tab-btn { background: #444; color: white; border: 1px solid var(--gold); padding: 5px 10px; cursor: pointer; border-radius: 4px; font-size: 0.8rem; }
         .map-tab-btn.active { background: var(--amber); color: black; font-weight: bold; }
     </style>
 </head>
@@ -165,10 +170,9 @@
     <div id="master-panel" class="hidden" style="padding:5px; background: #2c1d1a; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap;">
         <button onclick="openSpawnModal()" class="btn-taverna">➕ PNG</button>
         
-        <!-- NUOVI COMANDI DOPPIA MAPPA -->
-        <div style="display:flex; gap: 5px; align-items:center; border: 1px solid var(--gold); padding: 5px; border-radius: 4px;">
-            <button id="btn-tab-map1" onclick="switchMasterMap('map1')" class="map-tab-btn active">MAPPA 1</button>
-            <button id="btn-tab-map2" onclick="switchMasterMap('map2')" class="map-tab-btn">MAPPA 2</button>
+        <div style="display:flex; gap: 5px; align-items:center; border: 1px solid var(--gold); padding: 5px; border-radius: 4px; background:#111;">
+            <button id="btn-tab-map1" onclick="switchMasterMap('map1')" class="map-tab-btn active">MAP 1</button>
+            <button id="btn-tab-map2" onclick="switchMasterMap('map2')" class="map-tab-btn">MAP 2</button>
             <label for="map-upload" class="btn-taverna" style="background:var(--amber); color:black; cursor:pointer; padding:6px; margin:0; font-size:0.8rem;">🗺️ CARICA</label>
             <input type="file" id="map-upload" accept="image/*" style="display:none">
         </div>
@@ -181,14 +185,11 @@
     
     <div id="initiative-tracker"></div>
     
+    <!-- PULSANTONE MAPPA OTTIMIZZATO -->
     <div id="pinned-map-container">
-        <div id="pinned-map-title">
-            <span>🗺️ MAPPA DELLA BATTAGLIA <span id="map-player-indicator" style="color:white; font-size:0.6rem;"></span></span>
-            <button id="btn-close-map" class="hidden" onclick="removeMap()" style="background:#b71c1c; color:white; border:none; padding:2px 6px; border-radius:3px; cursor:pointer;">CHIUDI PER TUTTI</button>
-        </div>
-        <div style="position:relative; display:inline-block; max-width:100%;">
-            <img id="pinned-map-img" src="" onclick="openMapLightbox()">
-        </div>
+        <p id="map-player-indicator" style="color:var(--amber); font-size:0.7rem; margin:0 0 5px 0; text-align:left;"></p>
+        <button onclick="openMapLightbox()" class="btn-open-map">🗺️ APRI MAPPA ATTIVA 🗺️</button>
+        <button id="btn-close-map" class="hidden" onclick="removeMap()" style="background:#b71c1c; color:white; border:none; padding:4px 8px; border-radius:3px; cursor:pointer; margin-top:8px; font-size:0.7rem;">CHIUDI PER TUTTI</button>
     </div>
 
     <div id="party-bar"></div>
@@ -218,11 +219,24 @@
 <div id="modal-spawn" class="modal"><div class="modal-content"><h3 style="color:var(--amber); margin:0 0 10px 0;">Genera PNG</h3><input type="text" id="npc-name" placeholder="Nome"><input type="text" id="npc-title" placeholder="Titolo"><select id="npc-type" style="margin-bottom:10px;"><option value="NPC">NPC</option><option value="BOSS">BOSS</option></select><div style="display:flex; gap:5px;"><input type="number" id="npc-hp" placeholder="PF"><input type="number" id="npc-ac" placeholder="CA"><input type="number" id="npc-count" placeholder="Qtà" value="1"></div><p style="font-size:0.7rem; color:var(--amber);">Lingue PNG:</p><div id="npc-lang-selection" style="height:80px; overflow-y:auto; background:#333; padding:5px; margin-bottom:10px;"></div><label for="npc-photo" class="btn-taverna" style="display:block; text-align:center; background:#444; font-size:0.8rem; margin-bottom:10px;">CARICA FOTO</label><input type="file" id="npc-photo" accept="image/*" style="display:none"><div style="display:flex; gap:5px;"><button class="btn-taverna" style="flex:1" onclick="spawnNPC()">SPAWNA</button><button class="btn-taverna" style="flex:1; background:#b71c1c; color:white;" onclick="closeSpawnModal()">ANNULLA</button></div></div></div>
 <div id="modal-init" class="modal"><div class="modal-content"><h3 style="color:var(--amber); margin-top:0;">Iniziativa</h3><div id="init-list-container" style="max-height: 300px; overflow-y: auto; margin-bottom: 10px;"></div><button class="btn-taverna" style="width:100%;" onclick="confirmIniziativa()">⚔️ CONFERMA</button><button class="btn-taverna" style="width:100%; margin-top:5px; background:#b71c1c; color:white;" onclick="document.getElementById('modal-init').style.display='none'">ANNULLA</button></div></div>
 <div id="modal-manage" class="modal"><div class="modal-content"><h3 id="manage-title" style="color:var(--amber); margin-top:0;">Gestione Personaggio</h3><div id="manage-main-menu"><div class="manage-option" onclick="showManageAction('DANNI')">🔴 Danni</div><div class="manage-option" onclick="showManageAction('GUARIGIONE')">🔵 Guarigione</div><div class="manage-option" onclick="showManageAction('CONDIZIONI')">🟢 Condizioni</div><div class="manage-option" onclick="showManageAction('BUFF')">✨ Buff (PF/CA Temporanei)</div><div class="manage-option" onclick="showManageAction('EDIT')">✏️ Modifica Base e Foto</div></div><div id="manage-action-input" class="hidden"><input type="number" id="manage-value" placeholder="Quantità..."><button class="btn-taverna" style="width:100%; margin-top:5px;" onclick="applyManageAction()">APPLICA</button></div><div id="manage-conditions-list" class="hidden" style="text-align:left; margin-top:10px;"></div><div id="manage-edit-input" class="hidden"><label for="manage-photo" class="btn-taverna" style="display:block; text-align:center; background:#444; font-size:0.8rem; margin-bottom:10px;">📸 CAMBIA FOTO</label><input type="file" id="manage-photo" accept="image/*" style="display:none"><p style="font-size:0.7rem; color:var(--amber);">PF MAX (Base):</p><input type="number" id="manage-edit-hpmax" placeholder="Nuovi PF Max"><p style="font-size:0.7rem; color:var(--amber);">CA (Base):</p><input type="number" id="manage-edit-ac" placeholder="Nuova CA"><button class="btn-taverna" style="width:100%; margin-top:5px;" onclick="applyEditAction()">SALVA MODIFICHE</button></div><div id="manage-buff-input" class="hidden"><p style="font-size:0.8rem; color:var(--amber);">Bonus temporanei (vuoto = 0)</p><input type="number" id="manage-buff-hp" placeholder="PF Temp"><input type="number" id="manage-buff-ac" placeholder="Bonus CA"><button class="btn-taverna" style="width:100%; margin-top:5px;" onclick="applyBuffAction()">APPLICA BUFF</button></div><button class="btn-taverna" style="width:100%; margin-top:15px; background:#b71c1c; color:white;" onclick="closeManage()">CHIUDI</button></div></div>
-<div id="modal-settings" class="modal"><div class="modal-content"><h3 style="color:var(--amber); margin-top:0;">Aggiorna Statistiche</h3><input type="number" id="set-hp" placeholder="Nuovi PF Max"><input type="number" id="set-ac" placeholder="Nuova CA"><div style="display:flex; gap:5px; margin-top:10px;"><button class="btn-taverna" style="flex:1" onclick="saveSettings()">SALVA</button><button class="btn-taverna" style="flex:1; background:#b71c1c; color:white;" onclick="closeSettings()">ANNULLA</button></div></div></div>
+
+<!-- IMPOSTAZIONI AGGIORNATE CON CAMBIO FOTO -->
+<div id="modal-settings" class="modal"><div class="modal-content">
+    <h3 style="color:var(--amber); margin-top:0;">Impostazioni PG</h3>
+    <label for="set-photo" class="btn-taverna" style="display:block; text-align:center; background:#444; margin-bottom:10px;">📸 AGGIORNA LA TUA FOTO</label>
+    <input type="file" id="set-photo" accept="image/*" style="display:none">
+    <input type="number" id="set-hp" placeholder="Nuovi PF Max">
+    <input type="number" id="set-ac" placeholder="Nuova CA">
+    <div style="display:flex; gap:5px; margin-top:10px;">
+        <button class="btn-taverna" style="flex:1" onclick="saveSettings()">SALVA TUTTO</button>
+        <button class="btn-taverna" style="flex:1; background:#b71c1c; color:white;" onclick="closeSettings()">ANNULLA</button>
+    </div>
+</div></div>
 
 <div id="map-lightbox-overlay">
     <div id="zoom-container">
         <div id="map-wrapper">
+            <!-- IMMAGINE NON RITAGLIATA -->
             <img id="zoomable-img" src="">
             <canvas id="fog-canvas"></canvas>
             <div id="token-layer"></div>
@@ -230,38 +244,46 @@
         </div>
     </div>
     <div id="map-controls-bar">
+        <!-- Strumenti Navigazione Generali -->
         <div class="map-btn-row">
-            <button class="btn-taverna" style="font-size:1.2rem; padding:5px 15px;" onclick="changeMapZoom(0.3)">➕</button>
-            <button class="btn-taverna" style="font-size:1.2rem; padding:5px 15px;" onclick="changeMapZoom(-0.3)">➖</button>
-            <a id="btn-save-map" href="#" download="mappa.jpg" class="btn-taverna" style="text-decoration:none; padding:8px 15px; line-height:22px; background:var(--parchment);">💾</a>
-            <button class="btn-taverna" style="background:#b71c1c; color:white;" onclick="closeMapLightbox()">❌ CHIUDI</button>
+            <button class="btn-taverna" style="padding:6px 12px;" onclick="changeMapZoom(0.3)">➕</button>
+            <button class="btn-taverna" style="padding:6px 12px;" onclick="changeMapZoom(-0.3)">➖</button>
+            <a id="btn-save-map" href="#" download="mappa.jpg" class="btn-taverna" style="text-decoration:none; padding:8px 12px; background:var(--parchment);">💾</a>
+            <button class="btn-taverna" style="background:#b71c1c; color:white; font-size:0.8rem; padding:6px 12px;" onclick="closeMapLightbox()">❌ CHIUDI</button>
         </div>
-        <!-- PANNELLO ESCLUSIVO MASTER -->
+        
+        <!-- PANNELLO ESCLUSIVO MASTER (Design Compatto) -->
         <div id="master-fog-controls" class="master-fog-controls">
-            <div style="display:flex; gap:10px; justify-content:center; width:100%;">
-                <button id="btn-toggle-fog" onclick="toggleGlobalFog()" class="btn-taverna" style="font-size:0.75rem; flex:1;">🌫️ NEBBIA</button>
-                <button id="btn-erase-fog" onclick="toggleEraser('erase')" class="btn-taverna" style="font-size:0.75rem; flex:1;">👁️ GOMMA</button>
-                <button id="btn-draw-fog" onclick="toggleEraser('draw')" class="btn-taverna" style="font-size:0.75rem; flex:1;">🖌️ PENNELLO</button>
+            <!-- Riga 1: Nebbia -->
+            <div class="compact-controls">
+                <button id="btn-toggle-fog" onclick="toggleGlobalFog()" class="btn-taverna">🌫️ ON/OFF</button>
+                <button id="btn-erase-fog" onclick="toggleEraser('erase')" class="btn-taverna">👁️ GOMMA</button>
+                <button id="btn-draw-fog" onclick="toggleEraser('draw')" class="btn-taverna">🖌️ PENNELLO</button>
             </div>
             
-            <div style="display:flex; align-items:center; gap:5px; width:100%; justify-content:center; margin-top:5px;">
+            <!-- Riga 2: Selezione PG, Piazza, Nascondi -->
+            <div class="compact-controls">
                 <select id="map-token-select" onchange="loadTokenSize()"><option value="">Seleziona PG...</option></select>
-                <button onclick="placeSelectedToken()" class="btn-taverna" style="font-size:0.75rem; padding:6px;">➕ PIAZZA</button>
-                <button onclick="removeSelectedToken()" class="btn-taverna" style="font-size:0.75rem; padding:6px; background:#b71c1c; color:white;">❌ TOGLI</button>
+                <button onclick="placeSelectedToken()" class="btn-taverna" style="color:green;">➕</button>
+                <button onclick="removeSelectedToken()" class="btn-taverna" style="background:#b71c1c; color:white;">❌</button>
+                <button onclick="toggleTokenVisibility()" class="btn-taverna" title="Mostra/Nascondi ai giocatori">👁️</button>
             </div>
             
-            <div style="color:var(--amber); font-size:0.7rem; display:flex; align-items:center; gap:5px; width:100%; justify-content:center; flex-wrap:wrap;">
-                Taglia GLOBALE: <input type="range" id="master-token-size-global" min="10" max="80" value="30" onchange="updateTokenSizeDb(this.value, 'global')">
-                <br>Taglia SINGOLA: <input type="range" id="master-token-size-single" min="10" max="150" value="30" onchange="updateTokenSizeDb(this.value, 'single')">
+            <!-- Riga 3: Slider Taglie con Reset -->
+            <div class="compact-controls">
+                <div class="slider-group">Globale: <input type="range" id="master-token-size-global" min="10" max="80" value="30" onchange="updateTokenSizeDb(this.value, 'global')"></div>
+                <div class="slider-group">Singola: <input type="range" id="master-token-size-single" min="10" max="150" value="30" onchange="updateTokenSizeDb(this.value, 'single')">
+                    <button onclick="updateTokenSizeDb(null, 'single')" style="background:none; border:none; color:white; cursor:pointer;" title="Resetta Taglia">🔄</button>
+                </div>
             </div>
             
-            <button id="btn-share-map" onclick="shareCurrentMap()" class="btn-taverna" style="width:100%; background:var(--gold); color:black; margin-top:5px;">📢 MOSTRA QUESTA MAPPA AI GIOCATORI</button>
+            <button id="btn-share-map" onclick="shareCurrentMap()" class="btn-taverna" style="width:100%; background:var(--gold); color:black; font-size:0.8rem; padding:8px;">📢 MOSTRA QUESTA MAPPA AI GIOCATORI</button>
         </div>
     </div>
 </div>
 
 <div id="modal-lightbox" class="modal" onclick="closeChatLightbox()" style="flex-direction:column;">
-    <img id="chat-lightbox-img" src="" style="max-width:95%; max-height:80%; border:2px solid var(--gold); border-radius:8px;">
+    <img id="chat-lightbox-img" src="" style="max-width:95%; max-height:80%; border:2px solid var(--gold); border-radius:8px; object-fit:contain;">
     <a id="download-chat-lightbox" href="" download="immagine.jpg" class="btn-taverna" onclick="event.stopPropagation();" style="margin-top:20px; text-decoration:none;">💾 Salva in Galleria</a>
 </div>
 
@@ -274,11 +296,10 @@
     
     let campaignRef, me = { name: "", role: "", photo: "https://cdn-icons-png.flaticon.com/512/149/149071.png", hp: 10, hpMax: 10, ac: 10, info: "", langs: ["Comune"] };
     let cachedNPCs = {}, oldNPCs = {}; 
-    let currentTargetPG = null, npcTempPhoto = null, editTempPhoto = null, currentRound = 0;
+    let currentTargetPG = null, npcTempPhoto = null, editTempPhoto = null, playerTempPhoto = null, currentRound = 0;
     
-    // GESTIONE DOPPIA MAPPA
-    let masterActiveMap = 'map1'; // Quale mappa sta visualizzando/modificando il Master
-    let playerActiveMap = 'map1'; // Quale mappa è condivisa ufficialmente con i giocatori
+    let masterActiveMap = 'map1';
+    let playerActiveMap = 'map1';
     let mapDataCache = { map1: { url: '', fogEnabled: false, revealed: [], globalSize: 30 }, map2: { url: '', fogEnabled: false, revealed: [], globalSize: 30 } };
 
     const ALL_LANGS = ["Comune", "Elfico", "Gigante", "Gnomesco", "Goblin", "Halfling", "Nanico", "Orchesco", "Abissale", "Celestiale", "Draconico", "Infernale", "Silvano", "Sottocomune"];
@@ -289,13 +310,14 @@
     window.onload = () => {
         const langDiv = document.getElementById('lang-selection'); const npcLangDiv = document.getElementById('npc-lang-selection');
         ALL_LANGS.forEach(l => { langDiv.innerHTML += `<label class="lang-row"><input type="checkbox" class="lang-check" value="${l}" ${l==="Comune"?"checked disabled":""}> ${l}</label>`; npcLangDiv.innerHTML += `<label class="lang-row"><input type="checkbox" class="npc-lang-check" value="${l}" ${l==="Comune"?"checked":""}> ${l}</label>`; });
-        document.getElementById('npc-photo').onchange = async (e) => { if(e.target.files[0]) npcTempPhoto = await compressImg(e.target.files[0], 120); };
-        document.getElementById('manage-photo').onchange = async (e) => { if(e.target.files[0]) { editTempPhoto = await compressImg(e.target.files[0], 120); alert("📸 Foto pronta!"); } };
         
-        // CARICAMENTO IMMAGINE MAPPA CORRENTE DEL MASTER
+        document.getElementById('npc-photo').onchange = async (e) => { if(e.target.files[0]) npcTempPhoto = await compressImg(e.target.files[0], 120); };
+        document.getElementById('manage-photo').onchange = async (e) => { if(e.target.files[0]) { editTempPhoto = await compressImg(e.target.files[0], 120); alert("📸 Foto pronta per il salvataggio!"); } };
+        document.getElementById('set-photo').onchange = async (e) => { if(e.target.files[0]) { playerTempPhoto = await compressImg(e.target.files[0], 120); alert("📸 Nuova foto pronta per il salvataggio!"); } };
+        
         document.getElementById('map-upload').onchange = async (e) => { 
             if(e.target.files[0]) { 
-                const map64 = await compressImg(e.target.files[0], 1024, 0.6); 
+                const map64 = await compressImg(e.target.files[0], 1200, 0.7); 
                 campaignRef.child('maps').child(masterActiveMap).update({ url: map64, uploader: me.name }); 
             } 
         };
@@ -325,6 +347,7 @@
         document.getElementById('display-name').innerText = me.name; document.getElementById('display-code').innerText = me.code;
         campaignRef = db.ref('campaigns/'+me.code);
         localStorage.setItem('last_session', JSON.stringify({ code: me.code, name: me.name, role: me.role, photo: me.photo, info: me.info, hpMax: me.hpMax, ac: me.ac, langs: me.langs }));
+        
         if(me.role === 'master') { 
             document.getElementById('master-panel').classList.remove('hidden'); document.getElementById('master-only-ui').classList.remove('hidden'); document.getElementById('master-controls').style.display = 'flex'; document.getElementById('btn-close-map').classList.remove('hidden'); document.getElementById('master-fog-controls').style.display = 'flex'; 
         } else { 
@@ -342,11 +365,14 @@
             const sel = document.getElementById('msg-recipient'); const pSel = document.getElementById('player-msg-recipient'); const multi = document.getElementById('multi-selector'); const senderChoice = document.getElementById('sender-choice'); const currentChoice = senderChoice ? senderChoice.value : "MASTER";
             if(senderChoice) senderChoice.innerHTML = '<option value="MASTER">Parla come: MASTER</option>'; if(sel) sel.innerHTML = '<option value="ALL">Destinatario: TUTTI</option><option value="MULTI">SUSSURRO MULTIPLO</option>'; if(pSel) pSel.innerHTML = '<option value="ALL">A: TUTTI</option>'; if(multi) multi.innerHTML = "";
             
+            // SEPARAZIONE PG E PNG NEL MENU A TENDINA
             const mapTokenSelect = document.getElementById('map-token-select');
             if(mapTokenSelect) {
                 const mapSelVal = mapTokenSelect.value;
-                mapTokenSelect.innerHTML = '<option value="">Seleziona PG...</option>';
-                Object.values(ps).forEach(p => { mapTokenSelect.innerHTML += `<option value="${p.name}">${p.name}</option>`; });
+                let pgOpts = `<optgroup label="Giocatori">`, pngOpts = `<optgroup label="Mostri / PNG">`;
+                Object.values(ps).forEach(p => { if(p.type === 'PC') pgOpts += `<option value="${p.name}">${p.name}</option>`; else pngOpts += `<option value="${p.name}">${p.name}</option>`; });
+                pgOpts += `</optgroup>`; pngOpts += `</optgroup>`;
+                mapTokenSelect.innerHTML = '<option value="">Seleziona PG...</option>' + pgOpts + pngOpts;
                 if(mapSelVal) mapTokenSelect.value = mapSelVal;
             }
 
@@ -359,8 +385,9 @@
                 if(me.role === 'master' && (p.type === 'NPC' || p.type === 'BOSS')) senderChoice.innerHTML += `<option value="${p.name}">Parla come: ${p.name}</option>`;
                 if(p.name !== me.name) { if(me.role === 'master' && p.type !== 'NPC' && p.type !== 'BOSS') { sel.innerHTML += `<option value="${p.name}">Sussurra: ${p.name}</option>`; multi.innerHTML += `<div class="check-item"><input type="checkbox" class="whisper-check" value="${p.name}"> <span>${p.name}</span></div>`; } if(me.role === 'player' && p.type === 'PC') pSel.innerHTML += `<option value="${p.name}">Sussurra a: ${p.name}</option>`; }
                 const ratio = p.hp / p.hpMax; let filter = p.hp <= 0 ? "grayscale(100%) brightness(0.5)" : "none"; let condHtml = ""; if(p.cond) p.cond.split(",").filter(c=>c).forEach(c => condHtml += `<span class="cond-badge">${c}</span>`);
+                
                 let extraClass = p.type === 'NPC' ? 'npc-tag' : (p.type === 'BOSS' ? 'npc-tag boss-tag' : '');
-                if (p.hp <= 0) extraClass += " dead-tag"; // LA CLASSE SCURA APPLICATA ALLA BARRA
+                if (p.hp <= 0) extraClass += " dead-tag"; // BARRA SCURA PER LA MORTE
                 
                 if (oldNPCs && oldNPCs[p.name]) { if (p.hp < oldNPCs[p.name].hp) extraClass += " anim-hit"; else if (p.hp > oldNPCs[p.name].hp || p.tempHp > (oldNPCs[p.name].tempHp||0)) extraClass += " anim-heal"; }
                 let tHpHtml = (p.tempHp && p.tempHp > 0) ? ` <span style="color:#00bcd4;">(+${p.tempHp})</span>` : ""; let tAcHtml = (p.tempAc && p.tempAc !== 0) ? ` <span style="color:#00bcd4;">(${p.tempAc > 0 ? '+'+p.tempAc : p.tempAc})</span>` : "";
@@ -372,14 +399,12 @@
             renderMapTokens(); 
         });
 
-        // SYNC DELLA MAPPA ATTIVA GLOBALE
+        // SYNC VISTA MAPPA E CONTROLLO PULSANTE
         campaignRef.child('activeMapId').on('value', snap => {
             playerActiveMap = snap.val() || 'map1';
-            document.getElementById('map-player-indicator').innerText = me.role === 'master' ? `(In visione per te: ${masterActiveMap.toUpperCase()} | Visibile ai giocatori: ${playerActiveMap.toUpperCase()})` : '';
             applyCurrentMapView();
         });
 
-        // SYNC DEI DATI DELLE MAPPE
         campaignRef.child('maps').on('value', snap => {
             const data = snap.val() || {};
             mapDataCache.map1 = data.map1 || { url: '', fogEnabled: false, revealed: [], globalSize: 30 };
@@ -412,29 +437,35 @@
         campaignRef.child('messages').on('child_removed', snap => { const el = document.getElementById("msg-" + snap.key); if(el) el.remove(); });
     }
 
-    // --- GESTIONE VISTE DOPPIA MAPPA ---
+    // --- VISTE DOPPIA MAPPA ---
     function getMyViewMapId() { return me.role === 'master' ? masterActiveMap : playerActiveMap; }
     
     function switchMasterMap(mapId) {
         masterActiveMap = mapId;
         document.getElementById('btn-tab-map1').className = mapId === 'map1' ? 'map-tab-btn active' : 'map-tab-btn';
         document.getElementById('btn-tab-map2').className = mapId === 'map2' ? 'map-tab-btn active' : 'map-tab-btn';
-        document.getElementById('map-player-indicator').innerText = `(In visione per te: ${masterActiveMap.toUpperCase()} | Visibile ai giocatori: ${playerActiveMap.toUpperCase()})`;
         applyCurrentMapView();
     }
 
     function shareCurrentMap() {
         campaignRef.update({ activeMapId: masterActiveMap });
-        alert(`${masterActiveMap.toUpperCase()} è ora visibile a tutti i giocatori!`);
+        alert(`${masterActiveMap.toUpperCase()} condivisa con successo! I giocatori la vedranno al prossimo clic su APRI MAPPA.`);
     }
 
     function applyCurrentMapView() {
         const vId = getMyViewMapId();
         const mData = mapDataCache[vId] || { url: '', fogEnabled: false, revealed: [], globalSize: 30 };
         
+        // Se c'è una mappa caricata, mostra il bottone per aprirla
         document.getElementById('pinned-map-container').style.display = mData.url ? 'block' : 'none';
+        
+        let indicatorText = "";
+        if(me.role === 'master') {
+            indicatorText = `(In visione per te: ${masterActiveMap.toUpperCase()} | Condivisa: ${playerActiveMap.toUpperCase()})`;
+        }
+        document.getElementById('map-player-indicator').innerText = indicatorText;
+
         if (mData.url) { 
-            document.getElementById('pinned-map-img').src = mData.url; 
             document.getElementById('zoomable-img').src = mData.url; 
             document.getElementById('btn-save-map').href = mData.url; 
         }
@@ -451,7 +482,7 @@
         renderMapTokens();
     }
 
-    // --- LOGICA MOUSE/TOUCH MAPPA (ZOOM E PAN) ---
+    // --- MOUSE/TOUCH MAPPA ---
     let mapScale = 1, mapX = 0, mapY = 0, currentFogTool = null, mapDragging = false, startX, startY;
     
     function setupMapInteractions() {
@@ -469,7 +500,7 @@
                 const clientX = e.touches ? e.touches[0].clientX : e.clientX;
                 const clientY = e.touches ? e.touches[0].clientY : e.clientY;
                 const now = Date.now();
-                if (now - lastTap < 300 && !currentFogTool) { // PING
+                if (now - lastTap < 300 && !currentFogTool) { 
                     const rect = wrapper.getBoundingClientRect();
                     const px = ((clientX - rect.left) / rect.width) * 100, py = ((clientY - rect.top) / rect.height) * 100;
                     if(px >= 0 && px <= 100 && py >= 0 && py <= 100) { campaignRef.child('mapPing').set({x: px.toFixed(2), y: py.toFixed(2), user: me.name, time: Date.now(), mapId: getMyViewMapId()}); playTavernBell(); }
@@ -497,11 +528,16 @@
 
     function updateMapTransform() { document.getElementById('map-wrapper').style.transform = `translate(${mapX}px, ${mapY}px) scale(${mapScale})`; }
     function changeMapZoom(v) { mapScale = Math.max(1, Math.min(5, mapScale + v)); updateMapTransform(); }
-    function openMapLightbox() { document.getElementById('map-lightbox-overlay').style.display = 'flex'; mapScale = 1; mapX = 0; mapY = 0; updateMapTransform(); setTimeout(()=>drawFogCanvas(mapDataCache[getMyViewMapId()]), 100); }
+    
+    function openMapLightbox() { 
+        document.getElementById('map-lightbox-overlay').style.display = 'flex'; 
+        mapScale = 1; mapX = 0; mapY = 0; updateMapTransform(); 
+        setTimeout(()=>drawFogCanvas(mapDataCache[getMyViewMapId()]), 150); 
+    }
     function closeMapLightbox() { document.getElementById('map-lightbox-overlay').style.display = 'none'; }
     function removeMap() { if(confirm("Chiudere la mappa per tutti?")) campaignRef.child('maps').child(masterActiveMap).update({url: ""}); }
 
-    // --- NEBBIA DI GUERRA E PENNELLO ---
+    // --- NEBBIA E PENNELLO CON TRASPARENZA CSS ---
     function toggleGlobalFog() { 
         let vId = getMyViewMapId();
         campaignRef.child('maps').child(vId).update({ fogEnabled: !(mapDataCache[vId].fogEnabled) }); 
@@ -510,7 +546,7 @@
         let vId = getMyViewMapId();
         if(!mapDataCache[vId].fogEnabled) return alert("Attiva prima la nebbia!");
         
-        if (currentFogTool === toolType) currentFogTool = null; // Toggle off
+        if (currentFogTool === toolType) currentFogTool = null; 
         else currentFogTool = toolType;
 
         document.getElementById('btn-erase-fog').classList.toggle('active-tool', currentFogTool === 'erase');
@@ -523,43 +559,49 @@
             campaignRef.child('maps').child(masterActiveMap).child('revealed').push({x: px, y: py, r: 8, type: currentFogTool});
         }
     }
+    
     function drawFogCanvas(mData) {
         const canvas = document.getElementById('fog-canvas'); const img = document.getElementById('zoomable-img');
         if(!canvas || !img.src || !mData) return;
         canvas.width = img.clientWidth || window.innerWidth; canvas.height = img.clientHeight || window.innerHeight;
+        
+        // LA VERA MAGIA DELLA TRASPARENZA:
+        canvas.style.opacity = (me.role === 'master') ? '0.6' : '1.0';
+
         const ctx = canvas.getContext('2d');
         if(!mData.fogEnabled) { ctx.clearRect(0,0, canvas.width, canvas.height); return; }
         
-        // OPACITÀ DELLA NEBBIA: Master vede 0.6, Giocatori vedono 1.0 (nero puro)
-        let fogAlpha = (me.role === 'master') ? 0.6 : 1.0;
-        
-        ctx.globalCompositeOperation = 'source-over'; ctx.fillStyle = `rgba(0,0,0,${fogAlpha})`; ctx.fillRect(0,0, canvas.width, canvas.height);
+        ctx.globalCompositeOperation = 'source-over'; 
+        ctx.fillStyle = `rgba(0,0,0,1)`; // Disegna sempre nero puro!
+        ctx.fillRect(0,0, canvas.width, canvas.height);
         
         const acts = mData.revealed ? Object.values(mData.revealed) : [];
         acts.forEach(area => {
             const cx = (area.x / 100) * canvas.width, cy = (area.y / 100) * canvas.height, r = (area.r / 100) * canvas.width;
             ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2);
-            if(area.type === 'erase' || !area.type) { // erase / cut hole
+            
+            if(area.type === 'erase' || !area.type) { 
                 ctx.globalCompositeOperation = 'destination-out';
                 const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r); g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(0.7, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)');
                 ctx.fillStyle = g; ctx.fill();
-            } else if (area.type === 'draw') { // draw fog back
+            } else if (area.type === 'draw') { 
                 ctx.globalCompositeOperation = 'source-over';
-                const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r); g.addColorStop(0, `rgba(0,0,0,${fogAlpha})`); g.addColorStop(0.7, `rgba(0,0,0,${fogAlpha})`); g.addColorStop(1, 'rgba(0,0,0,0)');
+                const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r); g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(0.7, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)');
                 ctx.fillStyle = g; ctx.fill();
             }
         });
     }
 
-    // --- TOKENS (NOMI AL VOLO, DOPPIA MAPPA E DIMENSIONE SINGOLA) ---
+    // --- TOKENS (NOMI AL VOLO E MOVIMENTO GIOCATORI) ---
     function updateTokenSizeDb(val, type) { 
         if (type === 'global') {
             campaignRef.child('maps').child(masterActiveMap).update({ globalSize: parseInt(val) }); 
         } else if (type === 'single') {
             const name = document.getElementById('map-token-select').value;
             if(name) {
-                let updates = {}; updates[`${masterActiveMap}_size`] = parseInt(val);
+                let updates = {}; updates[`${masterActiveMap}_size`] = val === null ? null : parseInt(val);
                 campaignRef.child('players').child(name).update(updates);
+                loadTokenSize(); // Aggiorna barra
             }
         }
     }
@@ -585,6 +627,13 @@
         campaignRef.child('players').child(name).update(updates);
     }
 
+    function toggleTokenVisibility() {
+        const name = document.getElementById('map-token-select').value; if(!name) return alert("Scegli prima un PG!");
+        let currentState = cachedNPCs[name][`${masterActiveMap}_hidden`] || false;
+        let updates = {}; updates[`${masterActiveMap}_hidden`] = !currentState;
+        campaignRef.child('players').child(name).update(updates);
+    }
+
     function renderMapTokens() {
         const layer = document.getElementById('token-layer'); if(!layer) return;
         const vId = getMyViewMapId();
@@ -594,6 +643,11 @@
 
         Object.values(cachedNPCs).forEach(p => {
             let px = p[`${vId}_x`], py = p[`${vId}_y`];
+            let isHidden = p[`${vId}_hidden`];
+            
+            // SE IL GIOCATORE NON E' MASTER, E IL PG E' NASCOSTO, NON RENDERIZZARLO AFFATTO
+            if (me.role !== 'master' && isHidden) return;
+
             if(px >= 0 && py >= 0) {
                 activeNames.push(p.name);
                 let safeId = 'token-' + p.name.replace(/[^a-zA-Z0-9]/g, '-');
@@ -602,19 +656,18 @@
 
                 if(!wrap) {
                     wrap = document.createElement('div'); wrap.id = safeId; wrap.dataset.name = p.name; wrap.className = "token-wrapper";
-                    
                     let label = document.createElement('div'); label.className = "token-name-plate"; label.innerText = p.name; wrap.appendChild(label);
                     let img = document.createElement('img'); img.src = p.photo; img.className = "map-token"; wrap.appendChild(img);
                     
                     layer.appendChild(wrap);
 
-                    // Etichetta al volo su touch/mousedown
                     wrap.addEventListener('mousedown', () => wrap.classList.add('active-drag'));
                     wrap.addEventListener('mouseup', () => wrap.classList.remove('active-drag'));
                     wrap.addEventListener('touchstart', () => wrap.classList.add('active-drag'), {passive:true});
                     wrap.addEventListener('touchend', () => wrap.classList.remove('active-drag'));
 
-                    if(me.role === 'master') {
+                    // MOVIMENTO: Master può muovere tutto, i Giocatori possono muovere se stessi!
+                    if(me.role === 'master' || p.name === me.name) {
                         let isDraggingToken = false;
                         const tokenStart = (e) => { if(currentFogTool) return; e.preventDefault(); e.stopPropagation(); isDraggingToken = true; wrap.classList.add('active-drag'); };
                         const tokenMove = (e) => {
@@ -634,17 +687,35 @@
                     }
                 }
                 const imgNode = wrap.querySelector('img'); imgNode.style.width = tSize + "px"; imgNode.style.height = tSize + "px";
+                
+                // EFFETTO VISIVO SE E' NASCOSTO (Solo per il Master, perché gli altri non lo vedono)
+                if (isHidden) { wrap.style.opacity = '0.4'; imgNode.style.border = '2px dashed red'; } 
+                else { wrap.style.opacity = '1'; imgNode.style.border = '2px solid var(--amber)'; }
+
                 if (!wrap.classList.contains('active-drag')) { wrap.style.left = px + "%"; wrap.style.top = py + "%"; }
             }
         });
         Array.from(layer.children).forEach(t => { if(!activeNames.includes(t.dataset.name)) layer.removeChild(t); });
     }
 
-    // CHAT LIGHTBOX (Foto e allegati chat)
+    // CHAT LIGHTBOX E SETTINGS
     function openChatLightbox(src) { document.getElementById('chat-lightbox-img').src = src; document.getElementById('download-chat-lightbox').href = src; document.getElementById('modal-lightbox').style.display = 'flex'; }
     function closeChatLightbox() { document.getElementById('modal-lightbox').style.display = 'none'; }
+    
+    function openSettings() { if(me.role === 'master') return; document.getElementById('set-hp').value = me.hpMax; document.getElementById('set-ac').value = me.ac; playerTempPhoto = null; document.getElementById('modal-settings').style.display = 'flex'; }
+    function closeSettings() { document.getElementById('modal-settings').style.display = 'none'; }
+    function saveSettings() { 
+        if(me.role==='master') return; 
+        me.hpMax = parseInt(document.getElementById('set-hp').value)||me.hpMax; 
+        me.ac = parseInt(document.getElementById('set-ac').value)||me.ac; 
+        me.hp=Math.min(me.hp, me.hpMax); 
+        if(playerTempPhoto) me.photo = playerTempPhoto; // Aggiorna foto!
+        campaignRef.child('players').child(me.name).update({ hp: me.hp, hpMax: me.hpMax, ac: me.ac, photo: me.photo }); 
+        saveToVault(me); // Aggiorna registro locale
+        closeSettings(); 
+    }
 
-    // FUNZIONI STANDARD GESTIONE PG (Danni, Cure, Condizioni)
+    // GESTIONE PG, SPUNTINI, DANNI... (Resta invariato)
     function openManagePG(name) { if(me.role !== 'master') return; currentTargetPG = name; document.getElementById('manage-title').innerText = "Gestione " + name; document.getElementById('modal-manage').style.display = 'flex'; showManageAction('MAIN'); }
     function showManageAction(act) { ['manage-main-menu','manage-action-input','manage-conditions-list','manage-edit-input','manage-buff-input'].forEach(id => document.getElementById(id).classList.add('hidden')); if(act==='MAIN') document.getElementById('manage-main-menu').classList.remove('hidden'); else if(act==='CONDIZIONI') { const list = document.getElementById('manage-conditions-list'); list.innerHTML = ""; list.classList.remove('hidden'); const conds = (cachedNPCs[currentTargetPG].cond || "").split(",").filter(c=>c); CONDITIONS.forEach(c => list.innerHTML += `<div class="cond-list-item">${c} <button onclick="toggleCondition('${c}')" class="btn-taverna" style="padding:2px 8px; background:${conds.includes(c)?'#b71c1c':'#2e7d32'}; color:white">${conds.includes(c)?'RIMUOVI':'AGGIUNGI'}</button></div>`); } else if(act==='EDIT') { document.getElementById('manage-edit-input').classList.remove('hidden'); let p = cachedNPCs[currentTargetPG]; document.getElementById('manage-edit-hpmax').value = p.hpMax; document.getElementById('manage-edit-ac').value = p.ac; editTempPhoto = null; } else if(act==='BUFF') { document.getElementById('manage-buff-input').classList.remove('hidden'); let p = cachedNPCs[currentTargetPG]; document.getElementById('manage-buff-hp').value = p.tempHp || ""; document.getElementById('manage-buff-ac').value = p.tempAc || ""; } else { document.getElementById('manage-action-input').classList.remove('hidden'); document.getElementById('manage-value').dataset.mode = act; } }
     function toggleCondition(c) { let p = cachedNPCs[currentTargetPG]; let arr = (p.cond||"").split(",").filter(x=>x); if(arr.includes(c)) arr = arr.filter(x=>x!==c); else arr.push(c); campaignRef.child('players').child(currentTargetPG).update({ cond: arr.join(",") }); campaignRef.child('messages').push({ sender: me.role==='master'?me.name:"Master", senderRole: 'master', photo: me.photo, text: `${currentTargetPG} ora è: ${arr.join(",")||'Normale'}`, lang: "Comune", to: 'ALL', time: Date.now(), type: 'cond' }); showManageAction('CONDIZIONI'); }
@@ -665,9 +736,7 @@
     function playTavernBell() { try { const Ctx = window.AudioContext || window.webkitAudioContext; if(!Ctx) return; const ctx = new Ctx(); const o1 = ctx.createOscillator(), o2 = ctx.createOscillator(), g = ctx.createGain(); o1.connect(g); o2.connect(g); g.connect(ctx.destination); o1.frequency.value = 440; o2.frequency.value = 660; g.gain.setValueAtTime(0.2, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.8); o1.start(ctx.currentTime); o2.start(ctx.currentTime); o1.stop(ctx.currentTime+0.8); o2.stop(ctx.currentTime+0.8); } catch(_){} }
     function updateWhisperUI(val) { document.getElementById('multi-selector').style.display = val === 'MULTI' ? 'block' : 'none'; }
     function clearChat() { if(confirm("Vuoi cancellare tutta la cronologia?")) { campaignRef.child('messages').remove(); document.getElementById('chat-flow').innerHTML = ""; } }
-    function openSettings() { if(me.role === 'master') return; document.getElementById('set-hp').value = me.hpMax; document.getElementById('set-ac').value = me.ac; document.getElementById('modal-settings').style.display = 'flex'; }
-    function closeSettings() { document.getElementById('modal-settings').style.display = 'none'; }
-    function saveSettings() { if(me.role==='master') return; me.hpMax = parseInt(document.getElementById('set-hp').value)||me.hpMax; me.ac = parseInt(document.getElementById('set-ac').value)||me.ac; me.hp=me.hpMax; campaignRef.child('players').child(me.name).update({ hp: me.hp, hpMax: me.hpMax, ac: me.ac }); closeSettings(); }
+    
     function exitTavern() { localStorage.removeItem('last_session'); location.reload(); }
     function saveToVault(p) { let v = JSON.parse(localStorage.getItem('dd_vault') || '[]'); v = v.filter(x=>x.name!==p.name); v.push(p); localStorage.setItem('dd_vault', JSON.stringify(v)); loadVault(); }
     function loadVault() { const box = document.getElementById('pg-vault'); const v = JSON.parse(localStorage.getItem('dd_vault') || '[]'); box.innerHTML = ""; v.forEach(p => { const d = document.createElement('div'); d.className = 'vault-card'; d.innerHTML = `<span class="del-vault" onclick="event.stopPropagation(); deleteVault('${p.name}')">×</span><img src="${p.photo}"><div>${p.name}</div>`; d.onclick = () => { document.getElementById('user-name').value = p.name; document.getElementById('p-race-class').value = p.info; document.getElementById('p-hp').value = p.hpMax; document.getElementById('p-ac').value = p.ac; me.photo = p.photo; document.querySelectorAll('.lang-check').forEach(c => { if(c.value !== "Comune") c.checked = p.langs.includes(c.value); }); }; box.appendChild(d); }); }

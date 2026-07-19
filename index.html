@@ -312,6 +312,19 @@
     const firebaseConfig = { apiKey: "AIzaSyAm1BSUhkG5xylPVchP9tDsWfLXtR6-PdM", authDomain: "hero-s-ledger-99340.firebaseapp.com", databaseURL: "https://hero-s-ledger-99340-default-rtdb.europe-west1.firebasedatabase.app", projectId: "hero-s-ledger-99340", storageBucket: "hero-s-ledger-99340.firebasestorage.app", messagingSenderId: "745733175125", appId: "1:745733175125:web:12a62b5dc3fe53cba0a1dc" };
     firebase.initializeApp(firebaseConfig); const db = firebase.database();
 
+let pendingAction = null;
+
+function showConfirm(message, action) {
+    document.getElementById('confirm-msg').innerText = message;
+    document.getElementById('modal-confirm').style.display = 'flex';
+    pendingAction = action;
+}
+
+function confirmAction(yes) {
+    document.getElementById('modal-confirm').style.display = 'none';
+    if (yes && pendingAction) pendingAction();
+    pendingAction = null;
+}
     let campaignRef, me = { name: "", role: "", photo: "https://cdn-icons-png.flaticon.com/512/149/149071.png", hp: 10, hpMax: 10, ac: 10, info: "", langs: ["Comune"] };
     let cachedNPCs = {}, oldNPCs = {};
     let currentTargetPG = null, npcTempPhoto = null, editTempPhoto = null, playerTempPhoto = null, currentRound = 0;
@@ -839,8 +852,18 @@ function deleteVault(name) {
     document.getElementById('chat-audio-file').addEventListener('change', (e) => { if(e.target.files[0]) { const reader = new FileReader(); reader.onload = (ev) => sendMedia({ audioUrl: ev.target.result, text: "🎵 <i>Audio</i>" }); reader.readAsDataURL(e.target.files[0]); } });
     async function toggleRecording() { const btn = document.getElementById('btn-mic'); if (!isRecording) { try { const stream = await navigator.mediaDevices.getUserMedia({ audio: true }); let mimeType = 'audio/webm'; if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'audio/mp4'; mediaRecorder = new MediaRecorder(stream, { mimeType }); audioChunks = []; mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); }; mediaRecorder.onstop = () => { const reader = new FileReader(); const audioBlob = new Blob(audioChunks, { type: mimeType }); reader.onloadend = () => { sendMedia({ audioUrl: reader.result, text: "🎤 <i>Messaggio Vocale</i>" }); }; reader.readAsDataURL(audioBlob); stream.getTracks().forEach(t => t.stop()); }; mediaRecorder.start(); isRecording = true; btn.classList.add('recording-active'); btn.innerText = "⏹️"; } catch (err) {
     console.error("Errore microfono:", err);
-    alert("Errore: Il microfono non è accessibile. Verifica nelle impostazioni del telefono che l'app abbia il permesso di usare il microfono."); } } else { mediaRecorder.stop(); isRecording = false; btn.classList.remove('recording-active'); btn.innerText = "🎤"; } }
+    }
+    } else { mediaRecorder.stop(); isRecording = false; btn.classList.remove('recording-active'); btn.innerText = "🎤"; } }
     function sendMedia(data) { campaignRef.child('messages').push({ sender: me.name, senderRole: me.role==='master'?'master':'player', photo: me.photo, lang: "Comune", to: 'ALL', time: Date.now(), ...data }); }
 </script>
+<div id="modal-confirm" class="modal">
+    <div class="modal-content">
+        <h3 id="confirm-msg" style="color:white; margin-top:0;">Sei sicuro?</h3>
+        <div style="display:flex; gap:10px;">
+            <button class="btn-taverna" style="flex:1; background:red; color:white;" onclick="confirmAction(true)">SÌ</button>
+            <button class="btn-taverna" style="flex:1;" onclick="confirmAction(false)">NO</button>
+        </div>
+    </div>
+</div>
 </body>
 </html>

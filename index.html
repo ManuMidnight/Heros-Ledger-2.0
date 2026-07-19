@@ -51,7 +51,10 @@
 
         @keyframes boss-shine { 0% { filter: brightness(1); } 50% { filter: brightness(1.2); } 100% { filter: brightness(1); } }
         @keyframes hitShake { 0% { background-color: #b71c1c; transform: translate(2px, 1px); } 20% { transform: translate(-3px, 0px); } 40% { transform: translate(3px, 2px); } 60% { transform: translate(-3px, 1px); } 80% { transform: translate(2px, -1px); } 100% { transform: translate(0, 0); } }
-        @keyframes healPulse { 0% { background-color: #4caf50; box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); transform: scale(1); } 50% { transform: scale(1.05); } 100% { box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); transform: scale(1); } }
+        
+        /* Modificata l'animazione di cura da verde a blu */
+        @keyframes healPulse { 0% { background-color: #2196F3; box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.7); transform: scale(1); } 50% { transform: scale(1.05); } 100% { box-shadow: 0 0 0 10px rgba(33, 150, 243, 0); transform: scale(1); } }
+        
         .anim-hit { animation: hitShake 0.6s ease-in-out; }
         .anim-heal { animation: healPulse 0.6s ease-in-out; }
 
@@ -261,7 +264,6 @@
         </div>
         
         <div id="master-fog-controls" class="master-fog-controls">
-            <!-- FIX: Misura Pennello Aggiunta qui -->
             <div class="compact-controls">
                 <button id="btn-toggle-fog" onclick="toggleGlobalFog()" class="btn-taverna">🌫️ ON/OFF</button>
                 <button id="btn-erase-fog" onclick="toggleEraser('erase')" class="btn-taverna">👁️ GOMMA</button>
@@ -281,7 +283,6 @@
                 </div>
             </div>
             
-            <!-- FIX: Pulsante intelligente Condividi/Nascondi -->
             <div style="display:flex; width:100%; margin-top:5px;">
                 <button id="btn-toggle-share" onclick="toggleMapSharing()" class="btn-taverna" style="width:100%; font-size:0.75rem; padding:8px;">📢 CONDIVIDI AI PG</button>
             </div>
@@ -401,7 +402,10 @@
                 
                 if (oldNPCs && oldNPCs[p.name]) { if (p.hp < oldNPCs[p.name].hp) extraClass += " anim-hit"; else if (p.hp > oldNPCs[p.name].hp || p.tempHp > (oldNPCs[p.name].tempHp||0)) extraClass += " anim-heal"; }
                 let tHpHtml = (p.tempHp && p.tempHp > 0) ? ` <span style="color:#00bcd4;">(+${p.tempHp})</span>` : ""; let tAcHtml = (p.tempAc && p.tempAc !== 0) ? ` <span style="color:#00bcd4;">(${p.tempAc > 0 ? '+'+p.tempAc : p.tempAc})</span>` : "";
-                let stats = `<br><small style="${me.role==='master'?'cursor:pointer':''}" onclick="openManagePG('${p.name}')">${p.info||''} | ${p.hp}${tHpHtml}/${p.hpMax}PF | CA:${p.ac}${tAcHtml}</small>`; if(p.init > 0) stats += ` <small style="color:red;">Init:${p.init}</small>`;
+                
+                // FIX: Aggiunto style="color:green;" per forzare il verde sul testo finché il PG è vivo
+                let stats = `<br><small style="color:green; ${me.role==='master'?'cursor:pointer':''}" onclick="openManagePG('${p.name}')">${p.info||''} | ${p.hp}${tHpHtml}/${p.hpMax}PF | CA:${p.ac}${tAcHtml}</small>`; if(p.init > 0) stats += ` <small style="color:red;">Init:${p.init}</small>`;
+                
                 bar.innerHTML += `<div class="pg-tag ${extraClass}">${(me.role==='master')?`<button onclick="campaignRef.child('players').child('${p.name}').remove()" style="position:absolute;top:-5px;right:-5px;background:red;color:white;border-radius:50%;border:none;width:18px;cursor:pointer;z-index:20;">×</button>`:''}<div class="avatar-container"><img src="${p.photo||'https://cdn-icons-png.flaticon.com/512/149/149071.png'}" class="avatar-circle"><div class="hp-overlay" style="background: rgba(255,0,0,${(1-ratio)*0.6})"></div></div><div><strong>${p.hp<=0?'💀':''}${p.isSecret?'👻':''}${p.name}</strong>${(p.type==='PC'||me.role==='master')?stats:`<br><small style="color:green">${p.info||''}</small>`}<br>${condHtml}</div></div>`;
             });
             if(senderChoice) senderChoice.value = currentChoice;
@@ -615,7 +619,6 @@
         const wrapper = document.getElementById('map-wrapper'); const rect = wrapper.getBoundingClientRect();
         const px = ((clientX - rect.left) / rect.width) * 100; const py = ((clientY - rect.top) / rect.height) * 100;
         if(px >= 0 && px <= 100 && py >= 0 && py <= 100) {
-            // FIX: Leggiamo la misura direttamente dallo slider!
             const brushSize = parseInt(document.getElementById('master-fog-size').value) || 8;
             campaignRef.child('maps').child(masterActiveMap).child('revealed').push({x: px, y: py, r: brushSize, type: currentFogTool});
         }

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>D&amp;D Taverna - Hero's Ledger</title>
-    
+
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="D&amp;D Taverna">
@@ -13,23 +13,23 @@
 
     <style>
         :root { --wood: #3e2723; --stone: #424242; --amber: #ffca28; --gold: #b8860b; --parchment: #f5e1b6; }
-        
+
         html, body { overscroll-behavior: none !important; -webkit-overflow-scrolling: auto; margin: 0; height: 100%; width: 100%; position: fixed; top: 0; left: 0; display: flex; flex-direction: column; overflow: hidden; touch-action: none; }
         body { font-family: 'Georgia', serif; background-color: var(--wood); color: #d7ccc8; }
-        
+
         .login-overlay { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.95); display: flex; justify-content: center; align-items: center; overflow-y: auto; touch-action: pan-y; }
         .scroll-box { background: #212121; padding: 20px; border: 4px solid var(--stone); border-radius: 8px; width: 85%; max-width: 350px; text-align: center; }
-        
+
         input, select { background: #424242; color: white; border: 1px solid #757575; padding: 10px; margin: 5px 0; width: 100%; box-sizing: border-box; font-size: 16px; border-radius: 4px; }
         input[type="checkbox"], input[type="radio"] { width: auto !important; margin: 0 5px 0 0 !important; transform: scale(1.2); cursor: pointer; }
-        
+
         #multi-selector { background: #5d4037; padding: 10px; border: 2px solid var(--gold); margin-bottom: 8px; border-radius: 5px; display: none; max-height: 120px; overflow-y: auto; touch-action: pan-y; text-align: left; }
         .check-item { display: flex; align-items: center; justify-content: flex-start; margin-bottom: 8px; color: white; font-size: 0.9rem; cursor: pointer; width: 100%; }
 
         #game-ui { display: none; flex-direction: column; height: 100dvh; width: 100vw; position: fixed; top: 0; left: 0; overflow: hidden; overscroll-behavior: none; }
         header { background: var(--stone); color: var(--amber); padding: calc(8px + env(safe-area-inset-top, 0px)) 8px 8px 8px; text-align: center; border-bottom: 2px solid var(--gold); position: relative; }
         .exit-btn { position: absolute; left: 10px; top: calc(8px + env(safe-area-inset-top, 0px)); background: #b71c1c; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer; }
-        
+
         .vault-container { display: flex; gap: 8px; overflow-x: auto; padding: 10px 0; margin-bottom: 10px; border-bottom: 1px solid #444; }
         .vault-card { flex-shrink: 0; width: 60px; text-align: center; cursor: pointer; position: relative; }
         .vault-card img { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--gold); object-fit: cover; }
@@ -39,45 +39,45 @@
         .settings-btn { position: absolute; right: 10px; top: 8px; background: none; border: none; color: var(--amber); font-size: 1.2rem; cursor: pointer; }
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 200; }
         .modal-content { background: #212121; padding: 20px; border-radius: 8px; border: 2px solid var(--gold); width: 300px; max-height: 90vh; overflow-y: auto; touch-action: pan-y; }
-        
+
         #party-bar { display: flex; gap: 10px; padding: 10px; background: rgba(0,0,0,0.6); overflow-x: auto; min-height: 70px; align-items: center; }
         .pg-tag { background: var(--parchment); color: #3e2723; border: 2px solid var(--gold); padding: 5px 10px; border-radius: 5px; min-width: 140px; display: flex; align-items: center; gap: 8px; position: relative; flex-shrink: 0; transition: all 0.3s; }
         .npc-tag { border-color: #b71c1c; background: #ef9a9a; }
         .boss-tag { border: 3px solid #ffd700 !important; background: linear-gradient(135deg, #fff3b0 0%, #f5e1b6 50%, #fff3b0 100%); box-shadow: 0 0 10px #ffca28; animation: boss-shine 3s infinite; }
-        
+
         /* FIX: UI PG Morti - Colore Testo e Sfondo */
         .dead-tag { filter: grayscale(100%) brightness(0.65); border-color: #222 !important; background: #555 !important; color: #ddd !important; }
         .dead-tag small { color: #000 !important; font-weight: 900; background: rgba(255,255,255,0.6); padding: 1px 4px; border-radius: 3px; display: inline-block; margin-top: 2px; }
 
         @keyframes boss-shine { 0% { filter: brightness(1); } 50% { filter: brightness(1.2); } 100% { filter: brightness(1); } }
         @keyframes hitShake { 0% { background-color: #b71c1c; transform: translate(2px, 1px); } 20% { transform: translate(-3px, 0px); } 40% { transform: translate(3px, 2px); } 60% { transform: translate(-3px, 1px); } 80% { transform: translate(2px, -1px); } 100% { transform: translate(0, 0); } }
-        
+
         /* Modificata l'animazione di cura da verde a blu */
         @keyframes healPulse { 0% { background-color: #2196F3; box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.7); transform: scale(1); } 50% { transform: scale(1.05); } 100% { box-shadow: 0 0 0 10px rgba(33, 150, 243, 0); transform: scale(1); } }
-        
+
         .anim-hit { animation: hitShake 0.6s ease-in-out; }
         .anim-heal { animation: healPulse 0.6s ease-in-out; }
 
         .avatar-container { position: relative; width: 35px; height: 35px; flex-shrink: 0; }
         .avatar-circle { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; }
         .hp-overlay { position: absolute; inset: 0; border-radius: 50%; pointer-events: none; mix-blend-mode: multiply; }
-        
+
         #chat-flow { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 10px; background: rgba(0,0,0,0.3); overscroll-behavior-y: none; touch-action: pan-y; }
         .chat-bubble { display: flex; gap: 8px; margin-bottom: 10px; }
         .chat-avatar { width: 30px; height: 30px; border-radius: 50%; flex-shrink:0; }
         .chat-text { background: rgba(255,255,255,0.05); padding: 6px 10px; border-radius: 5px; max-width: 80%; font-size: 0.9rem; border-left: 3px solid transparent; }
         .chat-text[style*="color: #ff4444"] { border-left-color: #ff4444 !important; font-weight: bold; background: rgba(255, 68, 68, 0.1); }
         .chat-text[style*="color: #4444ff"] { border-left-color: #4444ff !important; font-weight: bold; background: rgba(68, 68, 255, 0.1); }
-        
+
         .input-area { background: var(--stone); padding: 10px; border-top: 2px solid var(--gold); }
         .btn-taverna { background: var(--gold); color: black; border: none; padding: 10px; cursor: pointer; font-weight: bold; border-radius: 4px; }
-        
+
         .chat-time { font-size: 0.65rem; color: #aaa; margin-left: 5px; font-weight: normal; }
         .hidden { display: none !important; }
         .recent-rooms { margin-top: 15px; text-align: left; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 5px; border: 1px dashed var(--gold); }
         .room-chip { display: inline-block; background: var(--stone); color: var(--amber); padding: 4px 8px; margin: 4px 2px; border-radius: 4px; font-size: 0.8rem; cursor: pointer; position: relative; }
         .del-room { position: absolute; top: -8px; right: -5px; background: #b71c1c; color: white; border-radius: 50%; width: 14px; height: 14px; font-size: 10px; line-height: 14px; text-align: center; border: 1px solid var(--gold); }
-        
+
         .cond-badge { font-size: 0.6rem; background: #b71c1c; color: white; padding: 1px 4px; border-radius: 3px; margin-right: 2px; display: inline-block; margin-top: 2px; }
         .lang-select { background: #3e2723; color: var(--amber); border: 1px solid var(--gold); font-size: 0.7rem; padding: 2px; margin-bottom: 5px; border-radius: 4px; }
         .manage-option { display: block; background: #444; color: white; padding: 10px; margin: 5px 0; border-radius: 4px; cursor: pointer; text-align: left; border: 1px solid #666; }
@@ -86,7 +86,7 @@
         .lang-row { display: flex; align-items: center; justify-content: flex-start; gap: 8px; margin-bottom: 5px; cursor: pointer; color: white; font-size: 0.9rem; }
         .master-only { display: none; gap: 5px; align-items: center; }
         .chat-image-attachment { max-width: 200px; max-height: 200px; border-radius: 5px; margin-top: 8px; display: block; border: 1px solid var(--gold); }
-        
+
         .btn-rec { background: #b71c1c; color: white; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: none; }
         .recording-active { animation: pulse-red 1.5s infinite; background: red; }
         @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(255,0,0,0.7); } 70% { box-shadow: 0 0 0 10px rgba(255,0,0,0); } 100% { box-shadow: 0 0 0 0 rgba(255,0,0,0); } }
@@ -102,17 +102,17 @@
 
         #map-lightbox-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: none; flex-direction: column; }
         #zoom-container { flex: 1; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; touch-action: none; background: #111; }
-        
+
         #map-wrapper { position: relative; transform-origin: center center; display: inline-block; }
         #zoomable-img { max-width: 100vw; max-height: 80vh; display: block; object-fit: contain; border: 2px solid var(--gold); user-select: none; -webkit-user-drag: none; }
-        
+
         #fog-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; transition: opacity 0.3s; }
         #token-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
         #ping-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; }
 
         .token-wrapper { position: absolute; pointer-events: auto; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; transition: opacity 0.3s; z-index: 10; }
         .map-token { width: 100%; height: auto; aspect-ratio: 1/1; border-radius: 50%; border: 2px solid var(--amber); object-fit: cover; box-shadow: 0 2px 5px rgba(0,0,0,0.8); user-select: none; -webkit-user-drag: none; pointer-events: none; background: #222; }
-        
+
         .token-name-plate { background: rgba(0,0,0,0.8); border: 1px solid var(--amber); color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; white-space: nowrap; margin-bottom: 4px; opacity: 0; transition: opacity 0.2s; pointer-events: none; font-weight: bold; text-shadow: 1px 1px 0px black; }
         .token-wrapper:active .token-name-plate, .token-wrapper.active-drag .token-name-plate { opacity: 1; }
 
@@ -124,7 +124,7 @@
         .map-btn-row { display: flex; gap: 8px; justify-content: center; align-items: center; }
         .master-fog-controls { background: #2c1d1a; padding: 8px; border-radius: 5px; display: none; flex-direction: column; gap: 8px; border: 1px solid var(--gold); }
         .active-tool { background: #4caf50 !important; color: white !important; border: 2px solid white !important; box-shadow: 0 0 5px #4caf50; }
-        
+
         .compact-controls { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; align-items: center; width: 100%; }
         .compact-controls button, .compact-controls select { padding: 6px; font-size: 0.75rem; margin: 0; }
         #map-token-select { background: #222; color: white; border: 1px solid var(--gold); border-radius: 4px; width: 130px; }
@@ -133,8 +133,18 @@
 
         .map-tab-btn { background: #444; color: white; border: 1px solid var(--gold); padding: 5px 10px; cursor: pointer; border-radius: 4px; font-size: 0.8rem; }
         .map-tab-btn.active { background: var(--amber); color: black; font-weight: bold; }
-        
-        #player-map-tabs { display: none; gap: 5px; justify-content: center; margin-bottom: 10px; }
+
+        #player-map-tabs {
+    display: none;
+    gap: 5px;
+    justify-content: center;
+    margin-bottom: 10px;
+    padding: 10px;
+    /* Questa riga aggiunge spazio solo se necessario, in base al tuo telefono */
+    padding-top: calc(10px + env(safe-area-inset-top, 20px));
+    background: #222;
+    border-bottom: 2px solid var(--gold);
+}
     </style>
 </head>
 <body>
@@ -175,22 +185,22 @@
     </header>
     <div id="master-panel" class="hidden" style="padding:5px; background: #2c1d1a; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap;">
         <button onclick="openSpawnModal()" class="btn-taverna">➕ PNG</button>
-        
+
         <div style="display:flex; gap: 5px; align-items:center; border: 1px solid var(--gold); padding: 5px; border-radius: 4px; background:#111;">
             <button id="btn-tab-map1" onclick="switchMasterMap('map1')" class="map-tab-btn active">MAP 1</button>
             <button id="btn-tab-map2" onclick="switchMasterMap('map2')" class="map-tab-btn">MAP 2</button>
             <label for="map-upload" class="btn-taverna" style="background:var(--amber); color:black; cursor:pointer; padding:6px; margin:0; font-size:0.8rem;">🗺️ CARICA</label>
             <input type="file" id="map-upload" accept="image/*" style="display:none">
         </div>
-        
+
         <button onclick="clearChat()" class="btn-taverna" style="background:#5d4037; color:white;">🧹 PULISCI</button>
         <button onclick="openInitModal()" class="btn-taverna" style="background:red; color:white;">⚔️ INIT</button>
         <button onclick="nextRound()" id="btn-round" class="btn-taverna" style="background:var(--amber);">⌛ ROUND +1</button>
         <button onclick="endCombat()" class="btn-taverna">🏳️ FINE</button>
     </div>
-    
+
     <div id="initiative-tracker"></div>
-    
+
     <div id="pinned-map-container">
         <p id="map-player-indicator" style="color:var(--amber); font-size:0.7rem; margin:0 0 5px 0; text-align:left;"></p>
         <button id="btn-open-map-main" onclick="openMapLightbox()" class="btn-open-map">🗺️ APRI MAPPA ATTIVA 🗺️</button>
@@ -241,7 +251,7 @@
 </div></div>
 
 <div id="map-lightbox-overlay">
-    <div id="player-map-tabs" style="padding: 10px; background: #222; border-bottom: 2px solid var(--gold);">
+    <div id="player-map-tabs">
         <span style="color:white; font-size:0.8rem; margin-right:10px;">Seleziona Mappa:</span>
         <button id="btn-ptab-map1" onclick="switchPlayerMap('map1')" class="map-tab-btn">MAP 1</button>
         <button id="btn-ptab-map2" onclick="switchPlayerMap('map2')" class="map-tab-btn">MAP 2</button>
@@ -262,7 +272,7 @@
             <a id="btn-save-map" href="#" download="mappa.jpg" class="btn-taverna" style="text-decoration:none; padding:8px 12px; background:var(--parchment);">💾</a>
             <button class="btn-taverna" style="background:#b71c1c; color:white; font-size:0.8rem; padding:6px 12px;" onclick="closeMapLightbox()">❌ CHIUDI</button>
         </div>
-        
+
         <div id="master-fog-controls" class="master-fog-controls">
             <div class="compact-controls">
                 <button id="btn-toggle-fog" onclick="toggleGlobalFog()" class="btn-taverna">🌫️ ON/OFF</button>
@@ -282,7 +292,7 @@
                     <button onclick="updateTokenSizeDb(null, 'single')" style="background:none; border:none; color:white; cursor:pointer;" title="Resetta Taglia">🔄</button>
                 </div>
             </div>
-            
+
             <div style="display:flex; width:100%; margin-top:5px;">
                 <button id="btn-toggle-share" onclick="toggleMapSharing()" class="btn-taverna" style="width:100%; font-size:0.75rem; padding:8px;">📢 CONDIVIDI AI PG</button>
             </div>
@@ -301,11 +311,11 @@
 <script>
     const firebaseConfig = { apiKey: "AIzaSyAm1BSUhkG5xylPVchP9tDsWfLXtR6-PdM", authDomain: "hero-s-ledger-99340.firebaseapp.com", databaseURL: "https://hero-s-ledger-99340-default-rtdb.europe-west1.firebasedatabase.app", projectId: "hero-s-ledger-99340", storageBucket: "hero-s-ledger-99340.firebasestorage.app", messagingSenderId: "745733175125", appId: "1:745733175125:web:12a62b5dc3fe53cba0a1dc" };
     firebase.initializeApp(firebaseConfig); const db = firebase.database();
-    
+
     let campaignRef, me = { name: "", role: "", photo: "https://cdn-icons-png.flaticon.com/512/149/149071.png", hp: 10, hpMax: 10, ac: 10, info: "", langs: ["Comune"] };
-    let cachedNPCs = {}, oldNPCs = {}; 
+    let cachedNPCs = {}, oldNPCs = {};
     let currentTargetPG = null, npcTempPhoto = null, editTempPhoto = null, playerTempPhoto = null, currentRound = 0;
-    
+
     let masterActiveMap = 'map1';
     let playerLocalMap = 'map1';
     let globalSharedMaps = { map1: false, map2: false };
@@ -319,18 +329,18 @@
     window.onload = () => {
         const langDiv = document.getElementById('lang-selection'); const npcLangDiv = document.getElementById('npc-lang-selection');
         ALL_LANGS.forEach(l => { langDiv.innerHTML += `<label class="lang-row"><input type="checkbox" class="lang-check" value="${l}" ${l==="Comune"?"checked disabled":""}> ${l}</label>`; npcLangDiv.innerHTML += `<label class="lang-row"><input type="checkbox" class="npc-lang-check" value="${l}" ${l==="Comune"?"checked":""}> ${l}</label>`; });
-        
+
         document.getElementById('npc-photo').onchange = async (e) => { if(e.target.files[0]) npcTempPhoto = await compressImg(e.target.files[0], 120); };
         document.getElementById('manage-photo').onchange = async (e) => { if(e.target.files[0]) { editTempPhoto = await compressImg(e.target.files[0], 120); alert("📸 Foto pronta!"); } };
         document.getElementById('set-photo').onchange = async (e) => { if(e.target.files[0]) { playerTempPhoto = await compressImg(e.target.files[0], 120); alert("📸 Nuova foto pronta!"); } };
-        
-        document.getElementById('map-upload').onchange = async (e) => { 
-            if(e.target.files[0]) { 
-                const map64 = await compressImg(e.target.files[0], 1200, 0.7); 
-                campaignRef.child('maps').child(masterActiveMap).update({ url: map64, uploader: me.name }); 
-            } 
+
+        document.getElementById('map-upload').onchange = async (e) => {
+            if(e.target.files[0]) {
+                const map64 = await compressImg(e.target.files[0], 1200, 0.7);
+                campaignRef.child('maps').child(masterActiveMap).update({ url: map64, uploader: me.name });
+            }
         };
-        
+
         loadVault(); updateRecentUI();
         const lastSession = JSON.parse(localStorage.getItem('last_session') || 'null');
         if (lastSession && lastSession.code && lastSession.name) {
@@ -356,12 +366,12 @@
         document.getElementById('display-name').innerText = me.name; document.getElementById('display-code').innerText = me.code;
         campaignRef = db.ref('campaigns/'+me.code);
         localStorage.setItem('last_session', JSON.stringify({ code: me.code, name: me.name, role: me.role, photo: me.photo, info: me.info, hpMax: me.hpMax, ac: me.ac, langs: me.langs }));
-        
-        if(me.role === 'master') { 
-            document.getElementById('master-panel').classList.remove('hidden'); document.getElementById('master-only-ui').classList.remove('hidden'); document.getElementById('master-controls').style.display = 'flex'; document.getElementById('master-fog-controls').style.display = 'flex'; 
-        } else { 
-            document.getElementById('player-whisper-ui').classList.remove('hidden'); 
-            campaignRef.child('players').child(me.name).update({ name: me.name, photo: me.photo, type: 'PC', info: me.info, hp: me.hp, hpMax: me.hpMax, ac: me.ac, init: 0, langs: me.langs, cond: "", tempHp: 0, tempAc: 0 }); 
+
+        if(me.role === 'master') {
+            document.getElementById('master-panel').classList.remove('hidden'); document.getElementById('master-only-ui').classList.remove('hidden'); document.getElementById('master-controls').style.display = 'flex'; document.getElementById('master-fog-controls').style.display = 'flex';
+        } else {
+            document.getElementById('player-whisper-ui').classList.remove('hidden');
+            campaignRef.child('players').child(me.name).update({ name: me.name, photo: me.photo, type: 'PC', info: me.info, hp: me.hp, hpMax: me.hpMax, ac: me.ac, init: 0, langs: me.langs, cond: "", tempHp: 0, tempAc: 0 });
         }
         setupSync(); setupMapInteractions(); preventPullRefresh();
     }
@@ -373,7 +383,7 @@
             const bar = document.getElementById('party-bar'); bar.innerHTML = ""; const ps = snap.val() || {};
             const sel = document.getElementById('msg-recipient'); const pSel = document.getElementById('player-msg-recipient'); const multi = document.getElementById('multi-selector'); const senderChoice = document.getElementById('sender-choice'); const currentChoice = senderChoice ? senderChoice.value : "MASTER";
             if(senderChoice) senderChoice.innerHTML = '<option value="MASTER">Parla come: MASTER</option>'; if(sel) sel.innerHTML = '<option value="ALL">Destinatario: TUTTI</option><option value="MULTI">SUSSURRO MULTIPLO</option>'; if(pSel) pSel.innerHTML = '<option value="ALL">A: TUTTI</option>'; if(multi) multi.innerHTML = "";
-            
+
             const mapTokenSelect = document.getElementById('map-token-select');
             if(mapTokenSelect) {
                 const mapSelVal = mapTokenSelect.value;
@@ -395,22 +405,22 @@
                 if(me.role === 'master' && (p.type === 'NPC' || p.type === 'BOSS')) senderChoice.innerHTML += `<option value="${p.name}">Parla come: ${p.name}</option>`;
                 if(p.name !== me.name) { if(me.role === 'master' && p.type !== 'NPC' && p.type !== 'BOSS') { sel.innerHTML += `<option value="${p.name}">Sussurra: ${p.name}</option>`; multi.innerHTML += `<div class="check-item"><input type="checkbox" class="whisper-check" value="${p.name}"> <span>${p.name}</span></div>`; } if(me.role === 'player' && p.type === 'PC') pSel.innerHTML += `<option value="${p.name}">Sussurra a: ${p.name}</option>`; }
                 const ratio = p.hp / p.hpMax; let filter = p.hp <= 0 ? "grayscale(100%) brightness(0.5)" : "none"; let condHtml = ""; if(p.cond) p.cond.split(",").filter(c=>c).forEach(c => condHtml += `<span class="cond-badge">${c}</span>`);
-                
+
                 let extraClass = p.type === 'NPC' ? 'npc-tag' : (p.type === 'BOSS' ? 'npc-tag boss-tag' : '');
-                if (p.hp <= 0) extraClass += " dead-tag"; 
-                if (me.role === 'master' && p.isSecret) extraClass += " hidden-tag"; 
-                
+                if (p.hp <= 0) extraClass += " dead-tag";
+                if (me.role === 'master' && p.isSecret) extraClass += " hidden-tag";
+
                 if (oldNPCs && oldNPCs[p.name]) { if (p.hp < oldNPCs[p.name].hp) extraClass += " anim-hit"; else if (p.hp > oldNPCs[p.name].hp || p.tempHp > (oldNPCs[p.name].tempHp||0)) extraClass += " anim-heal"; }
                 let tHpHtml = (p.tempHp && p.tempHp > 0) ? ` <span style="color:#00bcd4;">(+${p.tempHp})</span>` : ""; let tAcHtml = (p.tempAc && p.tempAc !== 0) ? ` <span style="color:#00bcd4;">(${p.tempAc > 0 ? '+'+p.tempAc : p.tempAc})</span>` : "";
-                
+
                 // FIX: Aggiunto style="color:green;" per forzare il verde sul testo finché il PG è vivo
                 let stats = `<br><small style="color:green; ${me.role==='master'?'cursor:pointer':''}" onclick="openManagePG('${p.name}')">${p.info||''} | ${p.hp}${tHpHtml}/${p.hpMax}PF | CA:${p.ac}${tAcHtml}</small>`; if(p.init > 0) stats += ` <small style="color:red;">Init:${p.init}</small>`;
-                
+
                 bar.innerHTML += `<div class="pg-tag ${extraClass}">${(me.role==='master')?`<button onclick="campaignRef.child('players').child('${p.name}').remove()" style="position:absolute;top:-5px;right:-5px;background:red;color:white;border-radius:50%;border:none;width:18px;cursor:pointer;z-index:20;">×</button>`:''}<div class="avatar-container"><img src="${p.photo||'https://cdn-icons-png.flaticon.com/512/149/149071.png'}" class="avatar-circle"><div class="hp-overlay" style="background: rgba(255,0,0,${(1-ratio)*0.6})"></div></div><div><strong>${p.hp<=0?'💀':''}${p.isSecret?'👻':''}${p.name}</strong>${(p.type==='PC'||me.role==='master')?stats:`<br><small style="color:green">${p.info||''}</small>`}<br>${condHtml}</div></div>`;
             });
             if(senderChoice) senderChoice.value = currentChoice;
-            oldNPCs = ps; cachedNPCs = ps; 
-            renderMapTokens(); 
+            oldNPCs = ps; cachedNPCs = ps;
+            renderMapTokens();
         });
 
         campaignRef.child('sharedMaps').on('value', snap => {
@@ -427,9 +437,9 @@
 
         campaignRef.child('mapPing').on('value', snap => {
             const ping = snap.val(); const layer = document.getElementById('ping-layer'); layer.innerHTML = "";
-            if (ping && ping.time > Date.now() - 3000 && ping.mapId === getMyViewMapId()) { 
-                layer.innerHTML = `<div class="ping-indicator" style="left:${ping.x}%; top:${ping.y}%"></div><div class="ping-label" style="left:${ping.x}%; top:${ping.y}%">📍 ${ping.user}</div>`; 
-                setTimeout(() => layer.innerHTML = "", 3000); 
+            if (ping && ping.time > Date.now() - 3000 && ping.mapId === getMyViewMapId()) {
+                layer.innerHTML = `<div class="ping-indicator" style="left:${ping.x}%; top:${ping.y}%"></div><div class="ping-label" style="left:${ping.x}%; top:${ping.y}%">📍 ${ping.user}</div>`;
+                setTimeout(() => layer.innerHTML = "", 3000);
             }
         });
 
@@ -452,7 +462,7 @@
 
     // --- VISTE DOPPIA MAPPA E TOGGLE CONDIVISIONE ---
     function getMyViewMapId() { return me.role === 'master' ? masterActiveMap : playerLocalMap; }
-    
+
     function switchMasterMap(mapId) {
         masterActiveMap = mapId;
         document.getElementById('btn-tab-map1').className = mapId === 'map1' ? 'map-tab-btn active' : 'map-tab-btn';
@@ -475,13 +485,13 @@
 
     function updatePlayerMapAccess() {
         if(me.role === 'master') {
-            applyCurrentMapView(); 
+            applyCurrentMapView();
             return;
         }
 
         const canSeeMap1 = globalSharedMaps.map1;
         const canSeeMap2 = globalSharedMaps.map2;
-        
+
         if (!canSeeMap1 && !canSeeMap2) {
             document.getElementById('pinned-map-container').style.display = 'none';
             closeMapLightbox();
@@ -489,7 +499,7 @@
         }
 
         document.getElementById('pinned-map-container').style.display = 'block';
-        
+
         if (playerLocalMap === 'map1' && !canSeeMap1) playerLocalMap = 'map2';
         if (playerLocalMap === 'map2' && !canSeeMap2) playerLocalMap = 'map1';
 
@@ -501,14 +511,14 @@
         } else {
             tabsDiv.style.display = 'none';
         }
-        
+
         applyCurrentMapView();
     }
 
     function applyCurrentMapView() {
         if(me.role === 'master') {
             document.getElementById('map-player-indicator').innerText = `Visualizzi: ${masterActiveMap.toUpperCase()} | Stato: ${globalSharedMaps[masterActiveMap] ? '🟢 Condivisa' : '🔴 Nascosta'}`;
-            
+
             // AGGIORNAMENTO DEL SINGOLO BOTTONE
             let btnShare = document.getElementById('btn-toggle-share');
             if (btnShare) {
@@ -522,32 +532,32 @@
                     btnShare.style.color = "white";
                 }
             }
-            document.getElementById('pinned-map-container').style.display = 'block'; 
+            document.getElementById('pinned-map-container').style.display = 'block';
         }
 
         const vId = getMyViewMapId();
         const mData = mapDataCache[vId] || { url: '', fogEnabled: false, revealed: [], globalSize: 4 };
 
-        if (mData.url) { 
-            document.getElementById('zoomable-img').src = mData.url; 
-            document.getElementById('btn-save-map').href = mData.url; 
+        if (mData.url) {
+            document.getElementById('zoomable-img').src = mData.url;
+            document.getElementById('btn-save-map').href = mData.url;
         }
 
         if(document.getElementById('master-token-size-global')) document.getElementById('master-token-size-global').value = mData.globalSize || 4;
-        
-        const btnFog = document.getElementById('btn-toggle-fog'); 
-        if(btnFog) { 
-            btnFog.innerHTML = mData.fogEnabled ? "🌫️ NEBBIA: ON" : "🌫️ NEBBIA: OFF"; 
-            if(mData.fogEnabled) btnFog.classList.add('active-tool'); else btnFog.classList.remove('active-tool'); 
+
+        const btnFog = document.getElementById('btn-toggle-fog');
+        if(btnFog) {
+            btnFog.innerHTML = mData.fogEnabled ? "🌫️ NEBBIA: ON" : "🌫️ NEBBIA: OFF";
+            if(mData.fogEnabled) btnFog.classList.add('active-tool'); else btnFog.classList.remove('active-tool');
         }
-        
+
         drawFogCanvas(mData);
         renderMapTokens();
     }
 
     // --- MOUSE/TOUCH MAPPA ---
     let mapScale = 1, mapX = 0, mapY = 0, currentFogTool = null, mapDragging = false, startX, startY;
-    
+
     function setupMapInteractions() {
         const container = document.getElementById('zoom-container');
         const wrapper = document.getElementById('map-wrapper');
@@ -555,7 +565,7 @@
         const getDist = (e) => Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
 
         const handleStart = (e) => {
-            if(e.target.closest('.token-wrapper')) return; 
+            if(e.target.closest('.token-wrapper')) return;
             isDown = true;
             if (e.touches && e.touches.length === 2) {
                 initialDist = getDist(e); initialScale = mapScale;
@@ -563,13 +573,13 @@
                 const clientX = e.touches ? e.touches[0].clientX : e.clientX;
                 const clientY = e.touches ? e.touches[0].clientY : e.clientY;
                 const now = Date.now();
-                if (now - lastTap < 300 && !currentFogTool) { 
+                if (now - lastTap < 300 && !currentFogTool) {
                     const rect = wrapper.getBoundingClientRect();
                     const px = ((clientX - rect.left) / rect.width) * 100, py = ((clientY - rect.top) / rect.height) * 100;
                     if(px >= 0 && px <= 100 && py >= 0 && py <= 100) { campaignRef.child('mapPing').set({x: px.toFixed(2), y: py.toFixed(2), user: me.name, time: Date.now(), mapId: getMyViewMapId()}); playTavernBell(); }
                 }
                 lastTap = now;
-                if (currentFogTool && me.role === 'master') { applyFogBrush(clientX, clientY); } 
+                if (currentFogTool && me.role === 'master') { applyFogBrush(clientX, clientY); }
                 else { mapDragging = true; startX = clientX - mapX; startY = clientY - mapY; }
             }
         };
@@ -580,7 +590,7 @@
                 mapScale = Math.max(1, Math.min(5, initialScale * (getDist(e) / initialDist))); updateMapTransform();
             } else {
                 const clientX = e.touches ? e.touches[0].clientX : e.clientX, clientY = e.touches ? e.touches[0].clientY : e.clientY;
-                if (currentFogTool && me.role === 'master') { if(e.cancelable) e.preventDefault(); applyFogBrush(clientX, clientY); } 
+                if (currentFogTool && me.role === 'master') { if(e.cancelable) e.preventDefault(); applyFogBrush(clientX, clientY); }
                 else if (mapDragging && !currentFogTool) { if(e.cancelable) e.preventDefault(); mapX = clientX - startX; mapY = clientY - startY; updateMapTransform(); }
             }
         };
@@ -591,25 +601,25 @@
 
     function updateMapTransform() { document.getElementById('map-wrapper').style.transform = `translate(${mapX}px, ${mapY}px) scale(${mapScale})`; }
     function changeMapZoom(v) { mapScale = Math.max(1, Math.min(5, mapScale + v)); updateMapTransform(); }
-    
-    function openMapLightbox() { 
-        document.getElementById('map-lightbox-overlay').style.display = 'flex'; 
-        mapScale = 1; mapX = 0; mapY = 0; updateMapTransform(); 
-        setTimeout(()=>drawFogCanvas(mapDataCache[getMyViewMapId()]), 150); 
+
+    function openMapLightbox() {
+        document.getElementById('map-lightbox-overlay').style.display = 'flex';
+        mapScale = 1; mapX = 0; mapY = 0; updateMapTransform();
+        setTimeout(()=>drawFogCanvas(mapDataCache[getMyViewMapId()]), 150);
     }
     function closeMapLightbox() { document.getElementById('map-lightbox-overlay').style.display = 'none'; }
     function removeMap() { if(confirm("Cancellare la mappa dal database?")) campaignRef.child('maps').child(masterActiveMap).update({url: ""}); }
 
     // --- NEBBIA E PENNELLO (CON MISURA VARIABILE) ---
-    function toggleGlobalFog() { 
+    function toggleGlobalFog() {
         let vId = getMyViewMapId();
-        campaignRef.child('maps').child(vId).update({ fogEnabled: !(mapDataCache[vId].fogEnabled) }); 
+        campaignRef.child('maps').child(vId).update({ fogEnabled: !(mapDataCache[vId].fogEnabled) });
     }
     function toggleEraser(toolType) {
         let vId = getMyViewMapId();
         if(!mapDataCache[vId].fogEnabled) return alert("Attiva prima la nebbia!");
-        
-        if (currentFogTool === toolType) currentFogTool = null; 
+
+        if (currentFogTool === toolType) currentFogTool = null;
         else currentFogTool = toolType;
 
         document.getElementById('btn-erase-fog').classList.toggle('active-tool', currentFogTool === 'erase');
@@ -623,31 +633,31 @@
             campaignRef.child('maps').child(masterActiveMap).child('revealed').push({x: px, y: py, r: brushSize, type: currentFogTool});
         }
     }
-    
+
     function drawFogCanvas(mData) {
         const canvas = document.getElementById('fog-canvas'); const img = document.getElementById('zoomable-img');
         if(!canvas || !img.src || !mData) return;
         canvas.width = img.clientWidth || window.innerWidth; canvas.height = img.clientHeight || window.innerHeight;
-        
+
         canvas.style.opacity = (me.role === 'master') ? '0.6' : '1.0';
 
         const ctx = canvas.getContext('2d');
         if(!mData.fogEnabled) { ctx.clearRect(0,0, canvas.width, canvas.height); return; }
-        
-        ctx.globalCompositeOperation = 'source-over'; 
+
+        ctx.globalCompositeOperation = 'source-over';
         ctx.fillStyle = `rgba(0,0,0,1)`;
         ctx.fillRect(0,0, canvas.width, canvas.height);
-        
+
         const acts = mData.revealed ? Object.values(mData.revealed) : [];
         acts.forEach(area => {
             const cx = (area.x / 100) * canvas.width, cy = (area.y / 100) * canvas.height, r = (area.r / 100) * canvas.width;
             ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2);
-            
-            if(area.type === 'erase' || !area.type) { 
+
+            if(area.type === 'erase' || !area.type) {
                 ctx.globalCompositeOperation = 'destination-out';
                 const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r); g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(0.7, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)');
                 ctx.fillStyle = g; ctx.fill();
-            } else if (area.type === 'draw') { 
+            } else if (area.type === 'draw') {
                 ctx.globalCompositeOperation = 'source-over';
                 const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r); g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(0.7, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)');
                 ctx.fillStyle = g; ctx.fill();
@@ -656,9 +666,9 @@
     }
 
     // --- TOKENS IN PERCENTUALE ---
-    function updateTokenSizeDb(val, type) { 
+    function updateTokenSizeDb(val, type) {
         if (type === 'global') {
-            campaignRef.child('maps').child(masterActiveMap).update({ globalSize: parseInt(val) }); 
+            campaignRef.child('maps').child(masterActiveMap).update({ globalSize: parseInt(val) });
         } else if (type === 'single') {
             const name = document.getElementById('map-token-select').value;
             if(name) {
@@ -677,13 +687,13 @@
             s.value = customSize || mapDataCache[masterActiveMap].globalSize || 4;
         }
     }
-    
+
     function placeSelectedToken() {
         const name = document.getElementById('map-token-select').value; if(!name) return alert("Scegli prima un PG!");
         let updates = {}; updates[`${masterActiveMap}_x`] = 50; updates[`${masterActiveMap}_y`] = 50;
         campaignRef.child('players').child(name).update(updates);
     }
-    
+
     function removeSelectedToken() {
         const name = document.getElementById('map-token-select').value; if(!name) return alert("Scegli prima un PG!");
         let updates = {}; updates[`${masterActiveMap}_x`] = -1; updates[`${masterActiveMap}_y`] = -1;
@@ -707,7 +717,7 @@
         Object.values(cachedNPCs).forEach(p => {
             let px = p[`${vId}_x`], py = p[`${vId}_y`];
             let isSecret = p.isSecret;
-            
+
             if (me.role !== 'master' && isSecret) return;
 
             if(px >= 0 && py >= 0) {
@@ -720,7 +730,7 @@
                     wrap = document.createElement('div'); wrap.id = safeId; wrap.dataset.name = p.name; wrap.className = "token-wrapper";
                     let label = document.createElement('div'); label.className = "token-name-plate"; label.innerText = p.name; wrap.appendChild(label);
                     let img = document.createElement('img'); img.src = p.photo; img.className = "map-token"; wrap.appendChild(img);
-                    
+
                     layer.appendChild(wrap);
 
                     wrap.addEventListener('mousedown', () => wrap.classList.add('active-drag'));
@@ -747,10 +757,10 @@
                         wrap.addEventListener('touchstart', tokenStart, {passive: false}); document.addEventListener('touchmove', tokenMove, {passive: false}); document.addEventListener('touchend', tokenEnd);
                     }
                 }
-                
+
                 wrap.style.width = tSize + "%";
-                
-                if (isSecret) { wrap.style.opacity = '0.4'; wrap.querySelector('img').style.border = '2px dashed red'; } 
+
+                if (isSecret) { wrap.style.opacity = '0.4'; wrap.querySelector('img').style.border = '2px dashed red'; }
                 else { wrap.style.opacity = '1'; wrap.querySelector('img').style.border = '2px solid var(--amber)'; }
 
                 if (!wrap.classList.contains('active-drag')) { wrap.style.left = px + "%"; wrap.style.top = py + "%"; }
@@ -761,18 +771,18 @@
 
     function openChatLightbox(src) { document.getElementById('chat-lightbox-img').src = src; document.getElementById('download-chat-lightbox').href = src; document.getElementById('modal-lightbox').style.display = 'flex'; }
     function closeChatLightbox() { document.getElementById('modal-lightbox').style.display = 'none'; }
-    
+
     function openSettings() { if(me.role === 'master') return; document.getElementById('set-hp').value = me.hpMax; document.getElementById('set-ac').value = me.ac; playerTempPhoto = null; document.getElementById('modal-settings').style.display = 'flex'; }
     function closeSettings() { document.getElementById('modal-settings').style.display = 'none'; }
-    function saveSettings() { 
-        if(me.role==='master') return; 
-        me.hpMax = parseInt(document.getElementById('set-hp').value)||me.hpMax; 
-        me.ac = parseInt(document.getElementById('set-ac').value)||me.ac; 
-        me.hp=Math.min(me.hp, me.hpMax); 
-        if(playerTempPhoto) me.photo = playerTempPhoto; 
-        campaignRef.child('players').child(me.name).update({ hp: me.hp, hpMax: me.hpMax, ac: me.ac, photo: me.photo }); 
-        saveToVault(me); 
-        closeSettings(); 
+    function saveSettings() {
+        if(me.role==='master') return;
+        me.hpMax = parseInt(document.getElementById('set-hp').value)||me.hpMax;
+        me.ac = parseInt(document.getElementById('set-ac').value)||me.ac;
+        me.hp=Math.min(me.hp, me.hpMax);
+        if(playerTempPhoto) me.photo = playerTempPhoto;
+        campaignRef.child('players').child(me.name).update({ hp: me.hp, hpMax: me.hpMax, ac: me.ac, photo: me.photo });
+        saveToVault(me);
+        closeSettings();
     }
 
     function openManagePG(name) { if(me.role !== 'master') return; currentTargetPG = name; document.getElementById('manage-title').innerText = "Gestione " + name; document.getElementById('modal-manage').style.display = 'flex'; showManageAction('MAIN'); }
@@ -787,11 +797,11 @@
 
     function preventPullRefresh() { document.addEventListener('touchmove', e => { const s = e.target.closest('#chat-flow, .modal-content, #lang-selection, #npc-lang-selection, #multi-selector, .vault-container, #party-bar, #zoom-container, #initiative-tracker'); if(!s){ if(e.cancelable) e.preventDefault(); return; } if(s.scrollTop <= 1 && e.touches[0].clientY > (s.lastY || e.touches[0].clientY)){ if(e.cancelable) e.preventDefault(); } s.lastY = e.touches[0].clientY; }, { passive: false }); document.addEventListener('touchstart', e => { const s = e.target.closest('#chat-flow, .modal-content, #lang-selection, #npc-lang-selection, #multi-selector, .vault-container, #party-bar, #zoom-container, #initiative-tracker'); if(s){ s.lastY = e.touches[0].clientY; if(s.scrollTop<=0) s.scrollTop=1; if(s.scrollTop+s.clientHeight>=s.scrollHeight) s.scrollTop=s.scrollHeight-s.clientHeight-1; } }, { passive: true }); }
     function openSpawnModal() { document.getElementById('modal-spawn').style.display = 'flex'; npcTempPhoto = null; } function closeSpawnModal() { document.getElementById('modal-spawn').style.display = 'none'; }
-    async function spawnNPC() { const name = document.getElementById('npc-name').value.trim(), title = document.getElementById('npc-title').value.trim(), type = document.getElementById('npc-type').value, hp = parseInt(document.getElementById('npc-hp').value)||10, ac = parseInt(document.getElementById('npc-ac').value)||10, count = parseInt(document.getElementById('npc-count').value)||1, langs = Array.from(document.querySelectorAll('.npc-lang-check:checked')).map(c=>c.value); 
+    async function spawnNPC() { const name = document.getElementById('npc-name').value.trim(), title = document.getElementById('npc-title').value.trim(), type = document.getElementById('npc-type').value, hp = parseInt(document.getElementById('npc-hp').value)||10, ac = parseInt(document.getElementById('npc-ac').value)||10, count = parseInt(document.getElementById('npc-count').value)||1, langs = Array.from(document.querySelectorAll('.npc-lang-check:checked')).map(c=>c.value);
         const isSecret = document.getElementById('npc-secret').checked;
-        if(!name) return alert("Inserisci un nome!"); let finalPhoto = npcTempPhoto || "https://cdn-icons-png.flaticon.com/512/149/149071.png"; 
-        for(let i=1; i<=count; i++) campaignRef.child('players').child(count>1?`${name} ${i}`:name).set({ name: count>1?`${name} ${i}`:name, photo: finalPhoto, type: type, info: title, hp: hp, hpMax: hp, ac: ac, init: 0, langs: langs, cond: "", tempHp: 0, tempAc: 0, isSecret: isSecret }); 
-        closeSpawnModal(); 
+        if(!name) return alert("Inserisci un nome!"); let finalPhoto = npcTempPhoto || "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+        for(let i=1; i<=count; i++) campaignRef.child('players').child(count>1?`${name} ${i}`:name).set({ name: count>1?`${name} ${i}`:name, photo: finalPhoto, type: type, info: title, hp: hp, hpMax: hp, ac: ac, init: 0, langs: langs, cond: "", tempHp: 0, tempAc: 0, isSecret: isSecret });
+        closeSpawnModal();
     }
     function openInitModal() { const c = document.getElementById('init-list-container'); c.innerHTML = ""; Object.values(cachedNPCs).forEach(p => c.innerHTML += `<div style="display:flex; align-items:center; gap:10px; margin-bottom:5px;"><span style="color:white; flex:1;">${p.name}</span><input type="number" class="init-input" data-name="${p.name}" value="${p.init||0}" style="width:60px; margin:0; padding:5px;"></div>`); document.getElementById('modal-init').style.display = 'flex'; }
     function confirmIniziativa() { document.querySelectorAll('.init-input').forEach(i => campaignRef.child('players').child(i.dataset.name).update({ init: parseInt(i.value)||0 })); document.getElementById('modal-init').style.display = 'none'; }
@@ -800,20 +810,36 @@
     function playTavernBell() { try { const Ctx = window.AudioContext || window.webkitAudioContext; if(!Ctx) return; const ctx = new Ctx(); const o1 = ctx.createOscillator(), o2 = ctx.createOscillator(), g = ctx.createGain(); o1.connect(g); o2.connect(g); g.connect(ctx.destination); o1.frequency.value = 440; o2.frequency.value = 660; g.gain.setValueAtTime(0.2, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.8); o1.start(ctx.currentTime); o2.start(ctx.currentTime); o1.stop(ctx.currentTime+0.8); o2.stop(ctx.currentTime+0.8); } catch(_){} }
     function updateWhisperUI(val) { document.getElementById('multi-selector').style.display = val === 'MULTI' ? 'block' : 'none'; }
     function clearChat() { if(confirm("Vuoi cancellare tutta la cronologia?")) { campaignRef.child('messages').remove(); document.getElementById('chat-flow').innerHTML = ""; } }
-    
+
     function exitTavern() { localStorage.removeItem('last_session'); location.reload(); }
     function saveToVault(p) { let v = JSON.parse(localStorage.getItem('dd_vault') || '[]'); v = v.filter(x=>x.name!==p.name); v.push(p); localStorage.setItem('dd_vault', JSON.stringify(v)); loadVault(); }
     function loadVault() { const box = document.getElementById('pg-vault'); const v = JSON.parse(localStorage.getItem('dd_vault') || '[]'); box.innerHTML = ""; v.forEach(p => { const d = document.createElement('div'); d.className = 'vault-card'; d.innerHTML = `<span class="del-vault" onclick="event.stopPropagation(); deleteVault('${p.name}')">×</span><img src="${p.photo}"><div>${p.name}</div>`; d.onclick = () => { document.getElementById('user-name').value = p.name; document.getElementById('p-race-class').value = p.info; document.getElementById('p-hp').value = p.hpMax; document.getElementById('p-ac').value = p.ac; me.photo = p.photo; document.querySelectorAll('.lang-check').forEach(c => { if(c.value !== "Comune") c.checked = p.langs.includes(c.value); }); }; box.appendChild(d); }); }
-    function deleteVault(name) { let v = JSON.parse(localStorage.getItem('dd_vault') || '[]'); v = v.filter(x=>x.name!==name); localStorage.setItem('dd_vault', JSON.stringify(v)); loadVault(); }
+function deleteVault(name) {
+    if (confirm("Sei sicuro di voler eliminare questo personaggio?")) {
+        let v = JSON.parse(localStorage.getItem('dd_vault') || '[]');
+        v = v.filter(x => x.name !== name);
+        localStorage.setItem('dd_vault', JSON.stringify(v));
+        loadVault();
+    }
+}
     function saveRecent(code) { let r = JSON.parse(localStorage.getItem('recent_rooms') || '[]'); r = r.filter(x=>x!==code); r.unshift(code); if(r.length>5) r.pop(); localStorage.setItem('recent_rooms', JSON.stringify(r)); updateRecentUI(); }
     function updateRecentUI() { const r = JSON.parse(localStorage.getItem('recent_rooms') || '[]'); const box = document.getElementById('recent-box'); const list = document.getElementById('recent-list'); if(r.length>0) { box.classList.remove('hidden'); list.innerHTML = `<div style="font-size:0.7rem; color:var(--gold); margin-bottom:5px;">Stanze recenti:</div>`; r.forEach(code => { list.innerHTML += `<span class="room-chip" onclick="document.getElementById('camp-code').value='${code}'">${code} <span class="del-room" onclick="event.stopPropagation(); removeRecent('${code}')">×</span></span>`; }); } else { box.classList.add('hidden'); } }
-    function removeRecent(code) { let r = JSON.parse(localStorage.getItem('recent_rooms') || '[]'); r = r.filter(x=>x!==code); localStorage.setItem('recent_rooms', JSON.stringify(r)); updateRecentUI(); }
-    
+    function removeRecent(code) {
+    if (confirm("Sei sicuro di voler rimuovere questa stanza dai recenti?")) {
+        let r = JSON.parse(localStorage.getItem('recent_rooms') || '[]');
+        r = r.filter(x => x !== code);
+        localStorage.setItem('recent_rooms', JSON.stringify(r));
+        updateRecentUI();
+    }
+}
+
     // MULTIMEDIA CHAT
     let mediaRecorder, audioChunks = [], isRecording = false;
     document.getElementById('chat-photo').addEventListener('change', async (e) => { if(e.target.files[0]) { const map64 = await compressImg(e.target.files[0], 600); sendMedia({ imageUrl: map64, text: "📷 <i>Immagine</i>" }); } });
     document.getElementById('chat-audio-file').addEventListener('change', (e) => { if(e.target.files[0]) { const reader = new FileReader(); reader.onload = (ev) => sendMedia({ audioUrl: ev.target.result, text: "🎵 <i>Audio</i>" }); reader.readAsDataURL(e.target.files[0]); } });
-    async function toggleRecording() { const btn = document.getElementById('btn-mic'); if (!isRecording) { try { const stream = await navigator.mediaDevices.getUserMedia({ audio: true }); let mimeType = 'audio/webm'; if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'audio/mp4'; mediaRecorder = new MediaRecorder(stream, { mimeType }); audioChunks = []; mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); }; mediaRecorder.onstop = () => { const reader = new FileReader(); const audioBlob = new Blob(audioChunks, { type: mimeType }); reader.onloadend = () => { sendMedia({ audioUrl: reader.result, text: "🎤 <i>Messaggio Vocale</i>" }); }; reader.readAsDataURL(audioBlob); stream.getTracks().forEach(t => t.stop()); }; mediaRecorder.start(); isRecording = true; btn.classList.add('recording-active'); btn.innerText = "⏹️"; } catch (err) { alert("Attiva permessi microfono."); } } else { mediaRecorder.stop(); isRecording = false; btn.classList.remove('recording-active'); btn.innerText = "🎤"; } }
+    async function toggleRecording() { const btn = document.getElementById('btn-mic'); if (!isRecording) { try { const stream = await navigator.mediaDevices.getUserMedia({ audio: true }); let mimeType = 'audio/webm'; if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'audio/mp4'; mediaRecorder = new MediaRecorder(stream, { mimeType }); audioChunks = []; mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); }; mediaRecorder.onstop = () => { const reader = new FileReader(); const audioBlob = new Blob(audioChunks, { type: mimeType }); reader.onloadend = () => { sendMedia({ audioUrl: reader.result, text: "🎤 <i>Messaggio Vocale</i>" }); }; reader.readAsDataURL(audioBlob); stream.getTracks().forEach(t => t.stop()); }; mediaRecorder.start(); isRecording = true; btn.classList.add('recording-active'); btn.innerText = "⏹️"; } catch (err) {
+    console.error("Errore microfono:", err);
+    alert("Errore: Il microfono non è accessibile. Verifica nelle impostazioni del telefono che l'app abbia il permesso di usare il microfono."); } } else { mediaRecorder.stop(); isRecording = false; btn.classList.remove('recording-active'); btn.innerText = "🎤"; } }
     function sendMedia(data) { campaignRef.child('messages').push({ sender: me.name, senderRole: me.role==='master'?'master':'player', photo: me.photo, lang: "Comune", to: 'ALL', time: Date.now(), ...data }); }
 </script>
 </body>

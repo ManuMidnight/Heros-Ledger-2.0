@@ -36,7 +36,8 @@
         .vault-card div { font-size: 0.6rem; color: var(--amber); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .del-vault { position: absolute; top: -5px; right: 5px; background: #b71c1c; color: white; border-radius: 50%; width: 16px; height: 16px; font-size: 12px; line-height: 16px; text-align: center; border: 1px solid var(--gold); z-index: 5; }
 
-        .settings-btn { position: absolute; right: 10px; top: 8px; background: none; border: none; color: var(--amber); font-size: 1.2rem; cursor: pointer; }
+        .settings-btn { position: absolute; right: 10px; top: calc(8px + env(safe-area-inset-top, 0px)); background: none; border: none; color: var(--amber); font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; height: 26px; }
+
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 200; }
         .modal-content { background: #212121; padding: 20px; border-radius: 8px; border: 2px solid var(--gold); width: 300px; max-height: 90vh; overflow-y: auto; touch-action: pan-y; }
 

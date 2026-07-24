@@ -184,21 +184,21 @@
         <span id="round-display" style="margin-left:10px; color:white; font-size:0.8rem;"></span>
         <button id="btn-settings" class="settings-btn" onclick="openSettings()">⚙️</button>
     </header>
-    <div id="master-panel" class="hidden" style="padding:5px; background: #2c1d1a; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap;">
+    <div id="master-panel" class="hidden" style="padding:5px; background: #2c1d1a; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; align-items: center;">
         <button onclick="openSpawnModal()" class="btn-taverna">➕ PNG</button>
 
-        <div style="display:flex; flex-direction:column; gap: 5px; align-items:center; border: 1px solid var(--gold); padding: 5px; border-radius: 4px; background:#111;">
+        <div style="display:flex; flex-direction:column; gap: 5px; border: 1px solid var(--gold); padding: 5px; border-radius: 4px; background:#111;">
             <div style="display:flex; gap: 5px; align-items: center;">
-                <button id="btn-tab-map1" onclick="switchMasterMap('map1')" class="map-tab-btn active">Mappa 1</button>
+                <button id="btn-tab-map1" onclick="switchMasterMap('map1')" class="map-tab-btn active">MAP 1</button>
                 <button onclick="renameMap('map1')" class="btn-taverna" style="padding:0 5px; font-size: 0.7rem;">✏️</button>
                 <button onclick="deleteMap('map1')" class="btn-taverna" style="padding:0 5px; font-size: 0.7rem; background:#b71c1c; color:white;">🗑️</button>
             </div>
             <div style="display:flex; gap: 5px; align-items: center;">
-                <button id="btn-tab-map2" onclick="switchMasterMap('map2')" class="map-tab-btn">Mappa 2</button>
+                <button id="btn-tab-map2" onclick="switchMasterMap('map2')" class="map-tab-btn">MAP 2</button>
                 <button onclick="renameMap('map2')" class="btn-taverna" style="padding:0 5px; font-size: 0.7rem;">✏️</button>
                 <button onclick="deleteMap('map2')" class="btn-taverna" style="padding:0 5px; font-size: 0.7rem; background:#b71c1c; color:white;">🗑️</button>
             </div>
-            <label for="map-upload" class="btn-taverna" style="background:var(--amber); color:black; cursor:pointer; padding:4px 8px; margin-top:5px; font-size:0.7rem; width:100%; box-sizing:border-box; text-align:center;">🗺️ CAMBIA IMMAGINE</label>
+            <label for="map-upload" class="btn-taverna" style="background:var(--amber); color:black; cursor:pointer; padding:4px; margin:0; font-size:0.7rem; text-align:center;">🗺️ CARICA</label>
             <input type="file" id="map-upload" accept="image/*" style="display:none">
         </div>
 
@@ -538,15 +538,17 @@ function confirmAction(yes) {
     }
 
     function applyCurrentMapView() {
+        // Aggiorniamo i testi dei pulsanti per i giocatori
+        if (mapDataCache.map1 && document.getElementById('btn-ptab-map1')) document.getElementById('btn-ptab-map1').innerText = mapDataCache.map1.name || 'MAP 1';
+        if (mapDataCache.map2 && document.getElementById('btn-ptab-map2')) document.getElementById('btn-ptab-map2').innerText = mapDataCache.map2.name || 'MAP 2';
+
         if(me.role === 'master') {
-            // Aggiorna l'indicatore testuale con il nome personalizzato
+            // Aggiorna l'indicatore testuale e i pulsanti del Master
             document.getElementById('map-player-indicator').innerText = `Visualizzi: ${mapDataCache[masterActiveMap].name || masterActiveMap.toUpperCase()} | Stato: ${globalSharedMaps[masterActiveMap] ? '🟢 Condivisa' : '🔴 Nascosta'}`;
+            
+            if (mapDataCache.map1) document.getElementById('btn-tab-map1').innerText = mapDataCache.map1.name || 'MAP 1';
+            if (mapDataCache.map2) document.getElementById('btn-tab-map2').innerText = mapDataCache.map2.name || 'MAP 2';
 
-            // Aggiorna i testi dei pulsanti con i nomi personalizzati in modo sicuro
-            if (mapDataCache.map1) document.getElementById('btn-tab-map1').innerText = mapDataCache.map1.name || 'Mappa 1';
-            if (mapDataCache.map2) document.getElementById('btn-tab-map2').innerText = mapDataCache.map2.name || 'Mappa 2';
-
-            // AGGIORNAMENTO DEL SINGOLO BOTTONE CONDIVISIONE
             let btnShare = document.getElementById('btn-toggle-share');
             if (btnShare) {
                 if (globalSharedMaps[masterActiveMap]) {
@@ -565,14 +567,19 @@ function confirmAction(yes) {
         const vId = getMyViewMapId();
         const mData = mapDataCache[vId] || { url: '', fogEnabled: false, revealed: [], globalSize: 4 };
 
-        // Mostra la mappa se c'è, altrimenti svuota l'immagine per riflettere l'eliminazione
+        // FIX: Se la mappa esiste la carichiamo normalmente, altrimenti creiamo una tela vuota
         if (mData.url && mData.url !== "") {
             document.getElementById('zoomable-img').src = mData.url;
             document.getElementById('btn-save-map').href = mData.url;
-            document.getElementById('zoomable-img').style.display = 'block';
+            // Rimuoviamo le dimensioni forzate per far adattare l'immagine caricata
+            document.getElementById('zoomable-img').style.width = '';
+            document.getElementById('zoomable-img').style.height = '';
         } else {
-            document.getElementById('zoomable-img').src = "";
-            document.getElementById('zoomable-img').style.display = 'none';
+            // Mettiamo un pixel trasparente per non far collassare l'area di gioco
+            document.getElementById('zoomable-img').src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+            // Diamo una grandezza di base così puoi continuare a usare i token!
+            document.getElementById('zoomable-img').style.width = '80vw';
+            document.getElementById('zoomable-img').style.height = '60vh';
         }
 
         if(document.getElementById('master-token-size-global')) document.getElementById('master-token-size-global').value = mData.globalSize || 4;

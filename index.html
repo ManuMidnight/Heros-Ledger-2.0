@@ -36,8 +36,7 @@
         .vault-card div { font-size: 0.6rem; color: var(--amber); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .del-vault { position: absolute; top: -5px; right: 5px; background: #b71c1c; color: white; border-radius: 50%; width: 16px; height: 16px; font-size: 12px; line-height: 16px; text-align: center; border: 1px solid var(--gold); z-index: 5; }
 
-        .settings-btn { position: absolute; right: 10px; top: calc(8px + env(safe-area-inset-top, 0px)); background: none; border: none; color: var(--amber); font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; height: 26px; }
-
+        .settings-btn { position: absolute; right: 10px; top: 8px; background: none; border: none; color: var(--amber); font-size: 1.2rem; cursor: pointer; }
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 200; }
         .modal-content { background: #212121; padding: 20px; border-radius: 8px; border: 2px solid var(--gold); width: 300px; max-height: 90vh; overflow-y: auto; touch-action: pan-y; }
 
@@ -46,14 +45,11 @@
         .npc-tag { border-color: #b71c1c; background: #ef9a9a; }
         .boss-tag { border: 3px solid #ffd700 !important; background: linear-gradient(135deg, #fff3b0 0%, #f5e1b6 50%, #fff3b0 100%); box-shadow: 0 0 10px #ffca28; animation: boss-shine 3s infinite; }
 
-        /* FIX: UI PG Morti - Colore Testo e Sfondo */
         .dead-tag { filter: grayscale(100%) brightness(0.65); border-color: #222 !important; background: #555 !important; color: #ddd !important; }
         .dead-tag small { color: #000 !important; font-weight: 900; background: rgba(255,255,255,0.6); padding: 1px 4px; border-radius: 3px; display: inline-block; margin-top: 2px; }
 
         @keyframes boss-shine { 0% { filter: brightness(1); } 50% { filter: brightness(1.2); } 100% { filter: brightness(1); } }
         @keyframes hitShake { 0% { background-color: #b71c1c; transform: translate(2px, 1px); } 20% { transform: translate(-3px, 0px); } 40% { transform: translate(3px, 2px); } 60% { transform: translate(-3px, 1px); } 80% { transform: translate(2px, -1px); } 100% { transform: translate(0, 0); } }
-
-        /* Modificata l'animazione di cura da verde a blu */
         @keyframes healPulse { 0% { background-color: #2196F3; box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.7); transform: scale(1); } 50% { transform: scale(1.05); } 100% { box-shadow: 0 0 0 10px rgba(33, 150, 243, 0); transform: scale(1); } }
 
         .anim-hit { animation: hitShake 0.6s ease-in-out; }
@@ -132,20 +128,15 @@
         .slider-group { display: flex; align-items: center; gap: 5px; color: var(--amber); font-size: 0.65rem; background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 4px; }
         .slider-group input[type="range"] { width: 80px; margin: 0; }
 
+        /* NUOVA UI CONTROLLI MAPPA */
+        .map-controls-grid { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+        .map-control-group { background: rgba(0,0,0,0.3); border: 1px solid var(--gold); border-radius: 6px; padding: 8px; text-align: center; }
+        .group-title { color: var(--amber); font-size: 0.8rem; font-weight: bold; margin-bottom: 6px; text-transform: uppercase; border-bottom: 1px dashed var(--gold); padding-bottom: 4px;}
+
         .map-tab-btn { background: #444; color: white; border: 1px solid var(--gold); padding: 5px 10px; cursor: pointer; border-radius: 4px; font-size: 0.8rem; }
         .map-tab-btn.active { background: var(--amber); color: black; font-weight: bold; }
 
-        #player-map-tabs {
-    display: none;
-    gap: 5px;
-    justify-content: center;
-    margin-bottom: 10px;
-    padding: 10px;
-    /* Questa riga aggiunge spazio solo se necessario, in base al tuo telefono */
-    padding-top: calc(10px + env(safe-area-inset-top, 20px));
-    background: #222;
-    border-bottom: 2px solid var(--gold);
-}
+        #player-map-tabs { display: none; gap: 5px; justify-content: center; margin-bottom: 10px; padding: 10px; padding-top: calc(10px + env(safe-area-inset-top, 20px)); background: #222; border-bottom: 2px solid var(--gold); }
     </style>
 </head>
 <body>
@@ -184,21 +175,13 @@
         <span id="round-display" style="margin-left:10px; color:white; font-size:0.8rem;"></span>
         <button id="btn-settings" class="settings-btn" onclick="openSettings()">⚙️</button>
     </header>
-    <div id="master-panel" class="hidden" style="padding:5px; background: #2c1d1a; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; align-items: center;">
+    <div id="master-panel" class="hidden" style="padding:5px; background: #2c1d1a; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap;">
         <button onclick="openSpawnModal()" class="btn-taverna">➕ PNG</button>
 
-        <div style="display:flex; flex-direction:column; gap: 5px; border: 1px solid var(--gold); padding: 5px; border-radius: 4px; background:#111;">
-            <div style="display:flex; gap: 5px; align-items: center;">
-                <button id="btn-tab-map1" onclick="switchMasterMap('map1')" class="map-tab-btn active">MAP 1</button>
-                <button onclick="renameMap('map1')" class="btn-taverna" style="padding:0 5px; font-size: 0.7rem;">✏️</button>
-                <button onclick="deleteMap('map1')" class="btn-taverna" style="padding:0 5px; font-size: 0.7rem; background:#b71c1c; color:white;">🗑️</button>
-            </div>
-            <div style="display:flex; gap: 5px; align-items: center;">
-                <button id="btn-tab-map2" onclick="switchMasterMap('map2')" class="map-tab-btn">MAP 2</button>
-                <button onclick="renameMap('map2')" class="btn-taverna" style="padding:0 5px; font-size: 0.7rem;">✏️</button>
-                <button onclick="deleteMap('map2')" class="btn-taverna" style="padding:0 5px; font-size: 0.7rem; background:#b71c1c; color:white;">🗑️</button>
-            </div>
-            <label for="map-upload" class="btn-taverna" style="background:var(--amber); color:black; cursor:pointer; padding:4px; margin:0; font-size:0.7rem; text-align:center;">🗺️ CARICA</label>
+        <div style="display:flex; gap: 5px; align-items:center; border: 1px solid var(--gold); padding: 5px; border-radius: 4px; background:#111;">
+            <button id="btn-tab-map1" onclick="switchMasterMap('map1')" class="map-tab-btn active">MAP 1</button>
+            <button id="btn-tab-map2" onclick="switchMasterMap('map2')" class="map-tab-btn">MAP 2</button>
+            <label for="map-upload" class="btn-taverna" style="background:var(--amber); color:black; cursor:pointer; padding:6px; margin:0; font-size:0.8rem;">🗺️ CARICA</label>
             <input type="file" id="map-upload" accept="image/*" style="display:none">
         </div>
 
@@ -283,27 +266,44 @@
         </div>
 
         <div id="master-fog-controls" class="master-fog-controls">
-            <div class="compact-controls">
-                <button id="btn-toggle-fog" onclick="toggleGlobalFog()" class="btn-taverna">🌫️ ON/OFF</button>
-                <button id="btn-erase-fog" onclick="toggleEraser('erase')" class="btn-taverna">👁️ GOMMA</button>
-                <button id="btn-draw-fog" onclick="toggleEraser('draw')" class="btn-taverna">🖌️ PENNELLO</button>
-                <div class="slider-group" style="margin-left:5px;">Raggio: <input type="range" id="master-fog-size" min="2" max="30" value="8"></div>
-            </div>
-            <div class="compact-controls">
-                <select id="map-token-select" onchange="loadTokenSize()"><option value="">Seleziona PG...</option></select>
-                <button onclick="placeSelectedToken()" class="btn-taverna" style="color:green;" title="Piazza in mappa">➕</button>
-                <button onclick="removeSelectedToken()" class="btn-taverna" style="background:#b71c1c; color:white;" title="Rimuovi da mappa">❌</button>
-                <button onclick="toggleTokenVisibility()" class="btn-taverna" title="Mostra/Nascondi ai giocatori">👁️ Visibilità</button>
-            </div>
-            <div class="compact-controls">
-                <div class="slider-group">Globale (%): <input type="range" id="master-token-size-global" min="1" max="20" value="4" onchange="updateTokenSizeDb(this.value, 'global')"></div>
-                <div class="slider-group">Singola (%): <input type="range" id="master-token-size-single" min="1" max="20" value="4" onchange="updateTokenSizeDb(this.value, 'single')">
-                    <button onclick="updateTokenSizeDb(null, 'single')" style="background:none; border:none; color:white; cursor:pointer;" title="Resetta Taglia">🔄</button>
+            <!-- NUOVA DISPOSIZIONE CONTROLLI MAPPA -->
+            <div class="map-controls-grid">
+                
+                <div class="map-control-group">
+                    <div class="group-title">♟️ Gestione Token</div>
+                    <div class="compact-controls">
+                        <select id="map-token-select" onchange="loadTokenSize()"><option value="">Seleziona PG...</option></select>
+                        <button onclick="placeSelectedToken()" class="btn-taverna" style="color:green; padding:6px 10px;" title="Piazza in mappa">➕ Piazza</button>
+                        <button onclick="removeSelectedToken()" class="btn-taverna" style="background:#b71c1c; color:white; padding:6px 10px;" title="Rimuovi da mappa">❌ Rimuovi</button>
+                        <button onclick="toggleTokenVisibility()" class="btn-taverna" style="padding:6px 10px;" title="Mostra/Nascondi ai giocatori">👁️ Visibilità</button>
+                    </div>
+                    <div class="compact-controls" style="margin-top:6px;">
+                        <div class="slider-group">Taglia Globale: <input type="range" id="master-token-size-global" min="1" max="20" value="4" onchange="updateTokenSizeDb(this.value, 'global')"></div>
+                        <div class="slider-group">Singola: <input type="range" id="master-token-size-single" min="1" max="20" value="4" onchange="updateTokenSizeDb(this.value, 'single')">
+                            <button onclick="updateTokenSizeDb(null, 'single')" style="background:none; border:none; color:white; cursor:pointer;" title="Resetta Taglia">🔄</button>
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <div style="display:flex; width:100%; margin-top:5px;">
-                <button id="btn-toggle-share" onclick="toggleMapSharing()" class="btn-taverna" style="width:100%; font-size:0.75rem; padding:8px;">📢 CONDIVIDI AI PG</button>
+                <div class="map-control-group">
+                    <div class="group-title">🌫️ Nebbia di Guerra</div>
+                    <div class="compact-controls">
+                        <button id="btn-toggle-fog" onclick="toggleGlobalFog()" class="btn-taverna">ON/OFF</button>
+                        <button id="btn-erase-fog" onclick="toggleEraser('erase')" class="btn-taverna">👁️ Rivela</button>
+                        <button id="btn-draw-fog" onclick="toggleEraser('draw')" class="btn-taverna">🖌️ Nascondi</button>
+                        <div class="slider-group">Raggio: <input type="range" id="master-fog-size" min="2" max="30" value="8"></div>
+                    </div>
+                </div>
+
+                <div class="map-control-group">
+                    <div class="group-title">⚙️ Opzioni Mappa Attiva</div>
+                    <div class="compact-controls">
+                        <button onclick="renameActiveMap()" class="btn-taverna" style="background:#1976d2; color:white;">✏️ Rinomina</button>
+                        <button onclick="deleteActiveMap()" class="btn-taverna" style="background:#b71c1c; color:white;">🗑️ Elimina</button>
+                        <button id="btn-toggle-share" onclick="toggleMapSharing()" class="btn-taverna" style="background:#4caf50; color:white;">📢 CONDIVIDI</button>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
@@ -341,7 +341,7 @@ function confirmAction(yes) {
     let masterActiveMap = 'map1';
     let playerLocalMap = 'map1';
     let globalSharedMaps = { map1: false, map2: false };
-    let mapDataCache = { map1: { url: '', fogEnabled: false, revealed: [], globalSize: 4 }, map2: { url: '', fogEnabled: false, revealed: [], globalSize: 4 } };
+    let mapDataCache = { map1: { url: '', fogEnabled: false, revealed: [], globalSize: 4, name: 'MAP 1' }, map2: { url: '', fogEnabled: false, revealed: [], globalSize: 4, name: 'MAP 2' } };
 
     const ALL_LANGS = ["Comune", "Elfico", "Gigante", "Gnomesco", "Goblin", "Halfling", "Nanico", "Orchesco", "Abissale", "Celestiale", "Draconico", "Infernale", "Silvano", "Sottocomune"];
     const CONDITIONS = ["Accecato", "Affascinato", "Afferrato", "Assordato", "Avvelenato", "Incapacitato", "Invisibile", "Paralizzato", "Pietrificato", "Prono", "Spaventato", "Stordito", "Trattenuto", "Indebolito"];
@@ -435,7 +435,6 @@ function confirmAction(yes) {
                 if (oldNPCs && oldNPCs[p.name]) { if (p.hp < oldNPCs[p.name].hp) extraClass += " anim-hit"; else if (p.hp > oldNPCs[p.name].hp || p.tempHp > (oldNPCs[p.name].tempHp||0)) extraClass += " anim-heal"; }
                 let tHpHtml = (p.tempHp && p.tempHp > 0) ? ` <span style="color:#00bcd4;">(+${p.tempHp})</span>` : ""; let tAcHtml = (p.tempAc && p.tempAc !== 0) ? ` <span style="color:#00bcd4;">(${p.tempAc > 0 ? '+'+p.tempAc : p.tempAc})</span>` : "";
 
-                // FIX: Aggiunto style="color:green;" per forzare il verde sul testo finché il PG è vivo
                 let stats = `<br><small style="color:green; ${me.role==='master'?'cursor:pointer':''}" onclick="openManagePG('${p.name}')">${p.info||''} | ${p.hp}${tHpHtml}/${p.hpMax}PF | CA:${p.ac}${tAcHtml}</small>`; if(p.init > 0) stats += ` <small style="color:red;">Init:${p.init}</small>`;
 
                 bar.innerHTML += `<div class="pg-tag ${extraClass}">${(me.role==='master')?`<button onclick="campaignRef.child('players').child('${p.name}').remove()" style="position:absolute;top:-5px;right:-5px;background:red;color:white;border-radius:50%;border:none;width:18px;cursor:pointer;z-index:20;">×</button>`:''}<div class="avatar-container"><img src="${p.photo||'https://cdn-icons-png.flaticon.com/512/149/149071.png'}" class="avatar-circle"><div class="hp-overlay" style="background: rgba(255,0,0,${(1-ratio)*0.6})"></div></div><div><strong>${p.hp<=0?'💀':''}${p.isSecret?'👻':''}${p.name}</strong>${(p.type==='PC'||me.role==='master')?stats:`<br><small style="color:green">${p.info||''}</small>`}<br>${condHtml}</div></div>`;
@@ -452,8 +451,15 @@ function confirmAction(yes) {
 
         campaignRef.child('maps').on('value', snap => {
             const data = snap.val() || {};
-            mapDataCache.map1 = data.map1 || { url: '', fogEnabled: false, revealed: [], globalSize: 4 };
-            mapDataCache.map2 = data.map2 || { url: '', fogEnabled: false, revealed: [], globalSize: 4 };
+            mapDataCache.map1 = data.map1 || { url: '', fogEnabled: false, revealed: [], globalSize: 4, name: 'MAP 1' };
+            mapDataCache.map2 = data.map2 || { url: '', fogEnabled: false, revealed: [], globalSize: 4, name: 'MAP 2' };
+            
+            // Aggiorna visivamente i nomi delle tab mappa
+            document.getElementById('btn-tab-map1').innerText = mapDataCache.map1.name || 'MAP 1';
+            document.getElementById('btn-tab-map2').innerText = mapDataCache.map2.name || 'MAP 2';
+            document.getElementById('btn-ptab-map1').innerText = mapDataCache.map1.name || 'MAP 1';
+            document.getElementById('btn-ptab-map2').innerText = mapDataCache.map2.name || 'MAP 2';
+
             applyCurrentMapView();
         });
 
@@ -505,6 +511,36 @@ function confirmAction(yes) {
         campaignRef.child('sharedMaps').update(updates);
     }
 
+    // NUOVE FUNZIONI: Rinomina ed Elimina Mappa
+    function renameActiveMap() {
+        const currentName = mapDataCache[masterActiveMap].name || masterActiveMap.toUpperCase();
+        const newName = prompt("Inserisci il nuovo nome per la mappa:", currentName);
+        if (newName && newName.trim() !== "") {
+            campaignRef.child('maps').child(masterActiveMap).update({ name: newName.trim() });
+        }
+    }
+
+    function deleteActiveMap() {
+        if(confirm("Sei sicuro di voler eliminare questa mappa e svuotarla completamente?")) {
+            // Pulisci l'immagine e la nebbia, mantenendo lo slot disponibile
+            campaignRef.child('maps').child(masterActiveMap).update({
+                url: "",
+                fogEnabled: false,
+                revealed: null,
+                name: masterActiveMap === 'map1' ? 'MAP 1' : 'MAP 2'
+            });
+            // Rimuovi anche tutti i token piazzati su questa mappa
+            Object.keys(cachedNPCs).forEach(key => {
+                let updates = {};
+                updates[`${masterActiveMap}_x`] = -1;
+                updates[`${masterActiveMap}_y`] = -1;
+                campaignRef.child('players').child(key).update(updates);
+            });
+            closeMapLightbox();
+            alert("La mappa è stata rimossa con successo e i token ritirati.");
+        }
+    }
+
     function updatePlayerMapAccess() {
         if(me.role === 'master') {
             applyCurrentMapView();
@@ -538,16 +574,9 @@ function confirmAction(yes) {
     }
 
     function applyCurrentMapView() {
-        // Aggiorniamo i testi dei pulsanti per i giocatori
-        if (mapDataCache.map1 && document.getElementById('btn-ptab-map1')) document.getElementById('btn-ptab-map1').innerText = mapDataCache.map1.name || 'MAP 1';
-        if (mapDataCache.map2 && document.getElementById('btn-ptab-map2')) document.getElementById('btn-ptab-map2').innerText = mapDataCache.map2.name || 'MAP 2';
-
         if(me.role === 'master') {
-            // Aggiorna l'indicatore testuale e i pulsanti del Master
-            document.getElementById('map-player-indicator').innerText = `Visualizzi: ${mapDataCache[masterActiveMap].name || masterActiveMap.toUpperCase()} | Stato: ${globalSharedMaps[masterActiveMap] ? '🟢 Condivisa' : '🔴 Nascosta'}`;
-            
-            if (mapDataCache.map1) document.getElementById('btn-tab-map1').innerText = mapDataCache.map1.name || 'MAP 1';
-            if (mapDataCache.map2) document.getElementById('btn-tab-map2').innerText = mapDataCache.map2.name || 'MAP 2';
+            const mapName = mapDataCache[masterActiveMap].name || masterActiveMap.toUpperCase();
+            document.getElementById('map-player-indicator').innerText = `Visualizzi: ${mapName} | Stato: ${globalSharedMaps[masterActiveMap] ? '🟢 Condivisa' : '🔴 Nascosta'}`;
 
             let btnShare = document.getElementById('btn-toggle-share');
             if (btnShare) {
@@ -567,26 +596,19 @@ function confirmAction(yes) {
         const vId = getMyViewMapId();
         const mData = mapDataCache[vId] || { url: '', fogEnabled: false, revealed: [], globalSize: 4 };
 
-        // FIX: Se la mappa esiste la carichiamo normalmente, altrimenti creiamo una tela vuota
-        if (mData.url && mData.url !== "") {
+        if (mData.url) {
             document.getElementById('zoomable-img').src = mData.url;
             document.getElementById('btn-save-map').href = mData.url;
-            // Rimuoviamo le dimensioni forzate per far adattare l'immagine caricata
-            document.getElementById('zoomable-img').style.width = '';
-            document.getElementById('zoomable-img').style.height = '';
         } else {
-            // Mettiamo un pixel trasparente per non far collassare l'area di gioco
-            document.getElementById('zoomable-img').src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
-            // Diamo una grandezza di base così puoi continuare a usare i token!
-            document.getElementById('zoomable-img').style.width = '80vw';
-            document.getElementById('zoomable-img').style.height = '60vh';
+            // Se non c'è URL (es. mappa appena cancellata)
+            document.getElementById('zoomable-img').src = "";
         }
 
         if(document.getElementById('master-token-size-global')) document.getElementById('master-token-size-global').value = mData.globalSize || 4;
 
         const btnFog = document.getElementById('btn-toggle-fog');
         if(btnFog) {
-            btnFog.innerHTML = mData.fogEnabled ? "🌫️ NEBBIA: ON" : "🌫️ NEBBIA: OFF";
+            btnFog.innerHTML = mData.fogEnabled ? "ON" : "OFF";
             if(mData.fogEnabled) btnFog.classList.add('active-tool'); else btnFog.classList.remove('active-tool');
         }
 
@@ -647,7 +669,6 @@ function confirmAction(yes) {
         setTimeout(()=>drawFogCanvas(mapDataCache[getMyViewMapId()]), 150);
     }
     function closeMapLightbox() { document.getElementById('map-lightbox-overlay').style.display = 'none'; }
-    function removeMap() { if(confirm("Cancellare la mappa dal database?")) campaignRef.child('maps').child(masterActiveMap).update({url: ""}); }
 
     // --- NEBBIA E PENNELLO (CON MISURA VARIABILE) ---
     function toggleGlobalFog() {
@@ -827,7 +848,7 @@ function confirmAction(yes) {
     function openManagePG(name) { if(me.role !== 'master') return; currentTargetPG = name; document.getElementById('manage-title').innerText = "Gestione " + name; document.getElementById('modal-manage').style.display = 'flex'; showManageAction('MAIN'); }
     function showManageAction(act) { ['manage-main-menu','manage-action-input','manage-conditions-list','manage-edit-input','manage-buff-input'].forEach(id => document.getElementById(id).classList.add('hidden')); if(act==='MAIN') document.getElementById('manage-main-menu').classList.remove('hidden'); else if(act==='CONDIZIONI') { const list = document.getElementById('manage-conditions-list'); list.innerHTML = ""; list.classList.remove('hidden'); const conds = (cachedNPCs[currentTargetPG].cond || "").split(",").filter(c=>c); CONDITIONS.forEach(c => list.innerHTML += `<div class="cond-list-item">${c} <button onclick="toggleCondition('${c}')" class="btn-taverna" style="padding:2px 8px; background:${conds.includes(c)?'#b71c1c':'#2e7d32'}; color:white">${conds.includes(c)?'RIMUOVI':'AGGIUNGI'}</button></div>`); } else if(act==='EDIT') { document.getElementById('manage-edit-input').classList.remove('hidden'); let p = cachedNPCs[currentTargetPG]; document.getElementById('manage-edit-hpmax').value = p.hpMax; document.getElementById('manage-edit-ac').value = p.ac; editTempPhoto = null; } else if(act==='BUFF') { document.getElementById('manage-buff-input').classList.remove('hidden'); let p = cachedNPCs[currentTargetPG]; document.getElementById('manage-buff-hp').value = p.tempHp || ""; document.getElementById('manage-buff-ac').value = p.tempAc || ""; } else { document.getElementById('manage-action-input').classList.remove('hidden'); document.getElementById('manage-value').dataset.mode = act; } }
     function toggleCondition(c) { let p = cachedNPCs[currentTargetPG]; let arr = (p.cond||"").split(",").filter(x=>x); if(arr.includes(c)) arr = arr.filter(x=>x!==c); else arr.push(c); campaignRef.child('players').child(currentTargetPG).update({ cond: arr.join(",") }); campaignRef.child('messages').push({ sender: me.role==='master'?me.name:"Master", senderRole: 'master', photo: me.photo, text: `${currentTargetPG} ora è: ${arr.join(",")||'Normale'}`, lang: "Comune", to: 'ALL', time: Date.now(), type: 'cond' }); showManageAction('CONDIZIONI'); }
-    function applyManageAction() { const mode = document.getElementById('manage-value').dataset.mode; const val = parseInt(document.getElementById('manage-value').value) || 0; let p = cachedNPCs[currentTargetPG]; let newHp = p.hp, newTempHp = p.tempHp || 0; if(mode === 'DANNI') { let dmg = val; if(newTempHp > 0){ if(dmg >= newTempHp){ dmg -= newTempHp; newTempHp = 0; }else{ newTempHp -= dmg; dmg = 0; } } newHp -= dmg; } else if(mode === 'GUARIGIONE') { newHp = Math.min(p.hpMax, newHp + val); } if(newHp < 0) newHp = 0; let msg = ""; if(mode==='DANNI') msg = newHp<=0 ? (p.type==='PC' ? `${p.name} subisce ${val} Danni e cade a terra privo di sensi! 0/${p.hpMax}` : `${p.name} subisce ${val} Danni ed è morto 💀`) : `${p.name} subisce ${val} Danni.` + (p.type==='PC'?` PF Attuali ${newHp}/${p.hpMax}`:""); else msg = `${p.name} recupera ${val} PF.` + (p.type==='PC'?` PF Attuali ${newHp}/${p.hpMax}`:""); campaignRef.child('players').child(currentTargetPG).update({ hp: newHp, tempHp: newTempHp }); campaignRef.child('messages').push({ sender: me.role==='master'?me.name:"Master", senderRole: 'master', photo: me.photo, text: msg, lang: "Comune", to: 'ALL', time: Date.now(), type: mode==='DANNI'?'damage':'heal' }); closeManage(); }
+    function applyManageAction() { const mode = document.getElementById('manage-value').dataset.mode; const val = parseInt(document.getElementById('manage-value').value) || 0; let p = cachedNPCs[currentTargetPG]; let newHp = p.hp, newTempHp = p.tempHp || 0; if(mode === 'DANNI') { let dmg = val; if(newTempHp > 0){ if(dmg >= newTempHp){ dmg -= newTempHp; newTempHp = 0; }else{ newTempHp -= dmg; dmg = 0; } } newHp -= dmg; } else if(mode === 'GUARIGIONE') { newHp = Math.min(p.hpMax, newHp + val); } if(newHp < 0) newHp = 0; let msg = ""; if(mode==='DANNI') msg = newHp<=0 ? (p.type==='PC' ? `${p.name} subisce ${val} Danni e cade a terra! 0/${p.hpMax}` : `${p.name} subisce ${val} Danni ed è morto 💀`) : `${p.name} subisce ${val} Danni.` + (p.type==='PC'?` PF Attuali ${newHp}/${p.hpMax}`:""); else msg = `${p.name} recupera ${val} PF.` + (p.type==='PC'?` PF Attuali ${newHp}/${p.hpMax}`:""); campaignRef.child('players').child(currentTargetPG).update({ hp: newHp, tempHp: newTempHp }); campaignRef.child('messages').push({ sender: me.role==='master'?me.name:"Master", senderRole: 'master', photo: me.photo, text: msg, lang: "Comune", to: 'ALL', time: Date.now(), type: mode==='DANNI'?'damage':'heal' }); closeManage(); }
     function applyEditAction() { let p = cachedNPCs[currentTargetPG]; let up = { hpMax: parseInt(document.getElementById('manage-edit-hpmax').value)||p.hpMax, ac: parseInt(document.getElementById('manage-edit-ac').value)||p.ac }; if(editTempPhoto) up.photo = editTempPhoto; if(p.hp > up.hpMax) up.hp = up.hpMax; campaignRef.child('players').child(currentTargetPG).update(up); campaignRef.child('messages').push({ sender: me.role==='master'?me.name:"Master", senderRole: 'master', photo: me.photo, text: `⚙️ Le statistiche base di ${p.name} sono aggiornate.`, lang: "Comune", to: 'ALL', time: Date.now() }); closeManage(); }
     function applyBuffAction() { let p = cachedNPCs[currentTargetPG]; const tHp = parseInt(document.getElementById('manage-buff-hp').value)||0, tAc = parseInt(document.getElementById('manage-buff-ac').value)||0; campaignRef.child('players').child(currentTargetPG).update({ tempHp: tHp, tempAc: tAc }); campaignRef.child('messages').push({ sender: me.role==='master'?me.name:"Master", senderRole: 'master', photo: me.photo, text: `✨ ${p.name} riceve dei buff!` + (tHp>0?` (+${tHp} PF Temp)`:"") + (tAc!==0?` (${tAc>0?'+'+tAc:tAc} CA)`:""), lang: "Comune", to: 'ALL', time: Date.now(), type: 'heal' }); closeManage(); }
     function closeManage() { document.getElementById('modal-manage').style.display = 'none'; document.getElementById('manage-value').value = ""; editTempPhoto = null; }
@@ -871,26 +892,7 @@ function deleteVault(name) {
         updateRecentUI();
     }
 }
-function renameMap(mapId) {
-        const currentName = mapDataCache[mapId]?.name || (mapId === 'map1' ? 'Mappa 1' : 'Mappa 2');
-        const newName = prompt("Inserisci il nome per questa mappa:", currentName);
-        if (newName) {
-            campaignRef.child('maps').child(mapId).update({ name: newName });
-        }
-    }
 
-    // Funzione per eliminare la mappa e resettare i dati a vuoto
-    function deleteMap(mapId) {
-        if (confirm("Sei sicuro di voler eliminare questa mappa e i suoi dati?")) {
-            campaignRef.child('maps').child(mapId).update({ 
-                url: "", 
-                name: (mapId === 'map1' ? 'Mappa 1' : 'Mappa 2'),
-                fogEnabled: false,
-                revealed: null 
-            });
-            alert("Mappa eliminata con successo!");
-        }
-    }
     // MULTIMEDIA CHAT
     let mediaRecorder, audioChunks = [], isRecording = false;
     document.getElementById('chat-photo').addEventListener('change', async (e) => { if(e.target.files[0]) { const map64 = await compressImg(e.target.files[0], 600); sendMedia({ imageUrl: map64, text: "📷 <i>Immagine</i>" }); } });

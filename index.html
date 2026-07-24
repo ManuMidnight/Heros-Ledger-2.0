@@ -187,10 +187,18 @@
     <div id="master-panel" class="hidden" style="padding:5px; background: #2c1d1a; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap;">
         <button onclick="openSpawnModal()" class="btn-taverna">➕ PNG</button>
 
-        <div style="display:flex; gap: 5px; align-items:center; border: 1px solid var(--gold); padding: 5px; border-radius: 4px; background:#111;">
-            <button id="btn-tab-map1" onclick="switchMasterMap('map1')" class="map-tab-btn active">MAP 1</button>
-            <button id="btn-tab-map2" onclick="switchMasterMap('map2')" class="map-tab-btn">MAP 2</button>
-            <label for="map-upload" class="btn-taverna" style="background:var(--amber); color:black; cursor:pointer; padding:6px; margin:0; font-size:0.8rem;">🗺️ CARICA</label>
+        <div style="display:flex; flex-direction:column; gap: 5px; align-items:center; border: 1px solid var(--gold); padding: 5px; border-radius: 4px; background:#111;">
+            <div style="display:flex; gap: 5px; align-items: center;">
+                <button id="btn-tab-map1" onclick="switchMasterMap('map1')" class="map-tab-btn active">Mappa 1</button>
+                <button onclick="renameMap('map1')" class="btn-taverna" style="padding:0 5px; font-size: 0.7rem;">✏️</button>
+                <button onclick="deleteMap('map1')" class="btn-taverna" style="padding:0 5px; font-size: 0.7rem; background:#b71c1c; color:white;">🗑️</button>
+            </div>
+            <div style="display:flex; gap: 5px; align-items: center;">
+                <button id="btn-tab-map2" onclick="switchMasterMap('map2')" class="map-tab-btn">Mappa 2</button>
+                <button onclick="renameMap('map2')" class="btn-taverna" style="padding:0 5px; font-size: 0.7rem;">✏️</button>
+                <button onclick="deleteMap('map2')" class="btn-taverna" style="padding:0 5px; font-size: 0.7rem; background:#b71c1c; color:white;">🗑️</button>
+            </div>
+            <label for="map-upload" class="btn-taverna" style="background:var(--amber); color:black; cursor:pointer; padding:4px 8px; margin-top:5px; font-size:0.7rem; width:100%; box-sizing:border-box; text-align:center;">🗺️ CAMBIA IMMAGINE</label>
             <input type="file" id="map-upload" accept="image/*" style="display:none">
         </div>
 
@@ -531,9 +539,14 @@ function confirmAction(yes) {
 
     function applyCurrentMapView() {
         if(me.role === 'master') {
-            document.getElementById('map-player-indicator').innerText = `Visualizzi: ${masterActiveMap.toUpperCase()} | Stato: ${globalSharedMaps[masterActiveMap] ? '🟢 Condivisa' : '🔴 Nascosta'}`;
+            // Aggiorna l'indicatore testuale con il nome personalizzato
+            document.getElementById('map-player-indicator').innerText = `Visualizzi: ${mapDataCache[masterActiveMap].name || masterActiveMap.toUpperCase()} | Stato: ${globalSharedMaps[masterActiveMap] ? '🟢 Condivisa' : '🔴 Nascosta'}`;
 
-            // AGGIORNAMENTO DEL SINGOLO BOTTONE
+            // Aggiorna i testi dei pulsanti con i nomi personalizzati in modo sicuro
+            if (mapDataCache.map1) document.getElementById('btn-tab-map1').innerText = mapDataCache.map1.name || 'Mappa 1';
+            if (mapDataCache.map2) document.getElementById('btn-tab-map2').innerText = mapDataCache.map2.name || 'Mappa 2';
+
+            // AGGIORNAMENTO DEL SINGOLO BOTTONE CONDIVISIONE
             let btnShare = document.getElementById('btn-toggle-share');
             if (btnShare) {
                 if (globalSharedMaps[masterActiveMap]) {
@@ -552,9 +565,14 @@ function confirmAction(yes) {
         const vId = getMyViewMapId();
         const mData = mapDataCache[vId] || { url: '', fogEnabled: false, revealed: [], globalSize: 4 };
 
-        if (mData.url) {
+        // Mostra la mappa se c'è, altrimenti svuota l'immagine per riflettere l'eliminazione
+        if (mData.url && mData.url !== "") {
             document.getElementById('zoomable-img').src = mData.url;
             document.getElementById('btn-save-map').href = mData.url;
+            document.getElementById('zoomable-img').style.display = 'block';
+        } else {
+            document.getElementById('zoomable-img').src = "";
+            document.getElementById('zoomable-img').style.display = 'none';
         }
 
         if(document.getElementById('master-token-size-global')) document.getElementById('master-token-size-global').value = mData.globalSize || 4;
@@ -846,7 +864,26 @@ function deleteVault(name) {
         updateRecentUI();
     }
 }
+function renameMap(mapId) {
+        const currentName = mapDataCache[mapId]?.name || (mapId === 'map1' ? 'Mappa 1' : 'Mappa 2');
+        const newName = prompt("Inserisci il nome per questa mappa:", currentName);
+        if (newName) {
+            campaignRef.child('maps').child(mapId).update({ name: newName });
+        }
+    }
 
+    // Funzione per eliminare la mappa e resettare i dati a vuoto
+    function deleteMap(mapId) {
+        if (confirm("Sei sicuro di voler eliminare questa mappa e i suoi dati?")) {
+            campaignRef.child('maps').child(mapId).update({ 
+                url: "", 
+                name: (mapId === 'map1' ? 'Mappa 1' : 'Mappa 2'),
+                fogEnabled: false,
+                revealed: null 
+            });
+            alert("Mappa eliminata con successo!");
+        }
+    }
     // MULTIMEDIA CHAT
     let mediaRecorder, audioChunks = [], isRecording = false;
     document.getElementById('chat-photo').addEventListener('change', async (e) => { if(e.target.files[0]) { const map64 = await compressImg(e.target.files[0], 600); sendMedia({ imageUrl: map64, text: "📷 <i>Immagine</i>" }); } });

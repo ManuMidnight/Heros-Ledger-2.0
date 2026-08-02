@@ -265,12 +265,19 @@
             <button class="btn-taverna" style="background:#b71c1c; color:white; font-size:0.8rem; padding:6px 12px;" onclick="closeMapLightbox()">❌ CHIUDI</button>
         </div>
 
-        <div id="master-fog-controls" class="master-fog-controls">
-            <!-- NUOVA DISPOSIZIONE CONTROLLI MAPPA -->
+<div id="master-fog-controls" class="master-fog-controls">
+            <!-- TABS STRUMENTI MASTER -->
+            <div style="display: flex; gap: 5px; justify-content: center; margin-bottom: 2px;">
+                <button id="tab-tool-token" class="map-tab-btn active" onclick="switchMasterTool('token')">♟️ Token</button>
+                <button id="tab-tool-fog" class="map-tab-btn" onclick="switchMasterTool('fog')">🌫️ Nebbia</button>
+                <button id="tab-tool-options" class="map-tab-btn" onclick="switchMasterTool('options')">⚙️ Opzioni</button>
+            </div>
+
+            <!-- PANNELLI CONTROLLO MAPPA (Visibili uno alla volta) -->
             <div class="map-controls-grid">
                 
-                <div class="map-control-group">
-                    <div class="group-title">♟️ Gestione Token</div>
+                <!-- GRUPPO TOKEN -->
+                <div id="tool-group-token" class="map-control-group">
                     <div class="compact-controls">
                         <select id="map-token-select" onchange="loadTokenSize()"><option value="">Seleziona PG...</option></select>
                         <button onclick="placeSelectedToken()" class="btn-taverna" style="color:green; padding:6px 10px;" title="Piazza in mappa">➕ Piazza</button>
@@ -285,8 +292,8 @@
                     </div>
                 </div>
 
-                <div class="map-control-group">
-                    <div class="group-title">🌫️ Nebbia di Guerra</div>
+                <!-- GRUPPO NEBBIA -->
+                <div id="tool-group-fog" class="map-control-group hidden">
                     <div class="compact-controls">
                         <button id="btn-toggle-fog" onclick="toggleGlobalFog()" class="btn-taverna">ON/OFF</button>
                         <button id="btn-erase-fog" onclick="toggleEraser('erase')" class="btn-taverna">👁️ Rivela</button>
@@ -295,10 +302,11 @@
                     </div>
                 </div>
 
-                <div class="map-control-group">
-                    <div class="group-title">⚙️ Opzioni Mappa Attiva</div>
+                <!-- GRUPPO OPZIONI -->
+                <div id="tool-group-options" class="map-control-group hidden">
                     <div class="compact-controls">
-                        <button onclick="renameActiveMap()" class="btn-taverna" style="background:#1976d2; color:white;">✏️ Rinomina</button>
+                        <!-- Qui è stato rinominato il pulsante come richiesto -->
+                        <button onclick="renameActiveMap()" class="btn-taverna" style="background:#1976d2; color:white;">✏️ Rinomina Mappa</button>
                         <button onclick="deleteActiveMap()" class="btn-taverna" style="background:#b71c1c; color:white;">🗑️ Elimina</button>
                         <button id="btn-toggle-share" onclick="toggleMapSharing()" class="btn-taverna" style="background:#4caf50; color:white;">📢 CONDIVIDI</button>
                     </div>
@@ -306,8 +314,6 @@
 
             </div>
         </div>
-    </div>
-</div>
 
 <div id="modal-lightbox" class="modal" onclick="closeChatLightbox()" style="flex-direction:column;">
     <img id="chat-lightbox-img" src="" style="max-width:95%; max-height:80%; border:2px solid var(--gold); border-radius:8px; object-fit:contain;">
@@ -510,7 +516,17 @@ function confirmAction(yes) {
         let updates = {}; updates[masterActiveMap] = !currentState;
         campaignRef.child('sharedMaps').update(updates);
     }
-
+function switchMasterTool(tool) {
+        // Un array con i nomi dei nostri tre pannelli
+        const panels = ['token', 'fog', 'options'];
+        
+        panels.forEach(t => {
+            // Aggiunge la classe "hidden" se il pannello non è quello cliccato, la rimuove se lo è
+            document.getElementById(`tool-group-${t}`).classList.toggle('hidden', t !== tool);
+            // Evidenzia visivamente la scheda attiva colorandola di giallo
+            document.getElementById(`tab-tool-${t}`).classList.toggle('active', t === tool);
+        });
+    }
     // NUOVE FUNZIONI: Rinomina ed Elimina Mappa
     function renameActiveMap() {
         const currentName = mapDataCache[masterActiveMap].name || masterActiveMap.toUpperCase();

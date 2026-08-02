@@ -228,7 +228,52 @@
     </label>
     <div style="display:flex; gap:5px;"><button class="btn-taverna" style="flex:1" onclick="spawnNPC()">SPAWNA</button><button class="btn-taverna" style="flex:1; background:#b71c1c; color:white;" onclick="closeSpawnModal()">ANNULLA</button></div></div></div>
 <div id="modal-init" class="modal"><div class="modal-content"><h3 style="color:var(--amber); margin-top:0;">Iniziativa</h3><div id="init-list-container" style="max-height: 300px; overflow-y: auto; margin-bottom: 10px;"></div><button class="btn-taverna" style="width:100%;" onclick="confirmIniziativa()">⚔️ CONFERMA</button><button class="btn-taverna" style="width:100%; margin-top:5px; background:#b71c1c; color:white;" onclick="document.getElementById('modal-init').style.display='none'">ANNULLA</button></div></div>
-<div id="modal-manage" class="modal"><div class="modal-content"><h3 id="manage-title" style="color:var(--amber); margin-top:0;">Gestione Personaggio</h3><div id="manage-main-menu"><div class="manage-option" onclick="showManageAction('DANNI')">🔴 Danni</div><div class="manage-option" onclick="showManageAction('GUARIGIONE')">🔵 Guarigione</div><div class="manage-option" onclick="showManageAction('CONDIZIONI')">🟢 Condizioni</div><div class="manage-option" onclick="showManageAction('BUFF')">✨ Buff (PF/CA Temporanei)</div><div class="manage-option" onclick="showManageAction('EDIT')">✏️ Modifica Base e Foto</div></div><div id="manage-action-input" class="hidden"><input type="number" id="manage-value" placeholder="Quantità..."><button class="btn-taverna" style="width:100%; margin-top:5px;" onclick="applyManageAction()">APPLICA</button></div><div id="manage-conditions-list" class="hidden" style="text-align:left; margin-top:10px;"></div><div id="manage-edit-input" class="hidden"><label for="manage-photo" class="btn-taverna" style="display:block; text-align:center; background:#444; font-size:0.8rem; margin-bottom:10px;">📸 CAMBIA FOTO</label><input type="file" id="manage-photo" accept="image/*" style="display:none"><p style="font-size:0.7rem; color:var(--amber);">PF MAX (Base):</p><input type="number" id="manage-edit-hpmax" placeholder="Nuovi PF Max"><p style="font-size:0.7rem; color:var(--amber);">CA (Base):</p><input type="number" id="manage-edit-ac" placeholder="Nuova CA"><button class="btn-taverna" style="width:100%; margin-top:5px;" onclick="applyEditAction()">SALVA MODIFICHE</button></div><div id="manage-buff-input" class="hidden"><p style="font-size:0.8rem; color:var(--amber);">Bonus temporanei (vuoto = 0)</p><input type="number" id="manage-buff-hp" placeholder="PF Temp"><input type="number" id="manage-buff-ac" placeholder="Bonus CA"><button class="btn-taverna" style="width:100%; margin-top:5px;" onclick="applyBuffAction()">APPLICA BUFF</button></div><button class="btn-taverna" style="width:100%; margin-top:15px; background:#b71c1c; color:white;" onclick="closeManage()">CHIUDI</button></div></div>
+<div id="modal-manage" class="modal">
+    <div class="modal-content">
+        <h3 id="manage-title" style="color:var(--amber); margin-top:0;">Gestione Personaggio</h3>
+        
+        <!-- Menu Principale -->
+        <div id="manage-main-menu">
+            <div class="manage-option" onclick="showManageAction('DANNI')">🔴 Danni</div>
+            <div class="manage-option" onclick="showManageAction('GUARIGIONE')">🔵 Guarigione</div>
+            <div class="manage-option" onclick="showManageAction('CONDIZIONI')">🟢 Condizioni</div>
+            <div class="manage-option" onclick="showManageAction('BUFF')">✨ Buff (PF/CA Temporanei)</div>
+            <div class="manage-option" onclick="showManageAction('EDIT')">✏️ Modifica Base e Foto</div>
+            <div class="manage-option" id="manage-visibility-btn" onclick="toggleManageVisibility()" style="border-color: var(--amber);">👁️ Visibilità: Calcolo in corso...</div>
+        </div>
+
+        <!-- Input Danni / Guarigione -->
+        <div id="manage-action-input" class="hidden">
+            <input type="number" id="manage-value" placeholder="Quantità...">
+            <button class="btn-taverna" style="width:100%; margin-top:5px;" onclick="applyManageAction()">APPLICA</button>
+        </div>
+
+        <!-- Lista Condizioni -->
+        <div id="manage-conditions-list" class="hidden" style="text-align:left; margin-top:10px;"></div>
+
+        <!-- Modifica Base e Foto -->
+        <div id="manage-edit-input" class="hidden">
+            <label for="manage-photo" class="btn-taverna" style="display:block; text-align:center; background:#444; font-size:0.8rem; margin-bottom:10px;">📸 CAMBIA FOTO</label>
+            <input type="file" id="manage-photo" accept="image/*" style="display:none">
+            <p style="font-size:0.7rem; color:var(--amber);">PF MAX (Base):</p>
+            <input type="number" id="manage-edit-hpmax" placeholder="Nuovi PF Max">
+            <p style="font-size:0.7rem; color:var(--amber);">CA (Base):</p>
+            <input type="number" id="manage-edit-ac" placeholder="Nuova CA">
+            <button class="btn-taverna" style="width:100%; margin-top:5px;" onclick="applyEditAction()">SALVA MODIFICHE</button>
+        </div>
+
+        <!-- Buff Temporanei -->
+        <div id="manage-buff-input" class="hidden">
+            <p style="font-size:0.8rem; color:var(--amber);">Bonus temporanei (vuoto = 0)</p>
+            <input type="number" id="manage-buff-hp" placeholder="PF Temp">
+            <input type="number" id="manage-buff-ac" placeholder="Bonus CA">
+            <button class="btn-taverna" style="width:100%; margin-top:5px;" onclick="applyBuffAction()">APPLICA BUFF</button>
+        </div>
+
+        <!-- Pulsante Chiudi (Ora correttamente dentro il riquadro) -->
+        <button class="btn-taverna" style="width:100%; margin-top:15px; background:#b71c1c; color:white;" onclick="closeManage()">CHIUDI</button>
+    </div>
+</div>
 
 <div id="modal-settings" class="modal"><div class="modal-content">
     <h3 style="color:var(--amber); margin-top:0;">Impostazioni PG</h3>
@@ -265,7 +310,7 @@
             <button class="btn-taverna" style="background:#b71c1c; color:white; font-size:0.8rem; padding:6px 12px;" onclick="closeMapLightbox()">❌ CHIUDI</button>
         </div>
 
-<div id="master-fog-controls" class="master-fog-controls">
+        <div id="master-fog-controls" class="master-fog-controls">
             <!-- TABS STRUMENTI MASTER -->
             <div style="display: flex; gap: 5px; justify-content: center; margin-bottom: 2px;">
                 <button id="tab-tool-token" class="map-tab-btn active" onclick="switchMasterTool('token')">♟️ Token</button>
@@ -314,6 +359,8 @@
 
             </div>
         </div>
+    </div>
+</div>
 
 <div id="modal-lightbox" class="modal" onclick="closeChatLightbox()" style="flex-direction:column;">
     <img id="chat-lightbox-img" src="" style="max-width:95%; max-height:80%; border:2px solid var(--gold); border-radius:8px; object-fit:contain;">
@@ -370,13 +417,30 @@ function confirmAction(yes) {
         };
 
         loadVault(); updateRecentUI();
+        
+        // AGGIORNAMENTO: Qui l'app leggerà la mappa esatta dalla sessione salvata
         const lastSession = JSON.parse(localStorage.getItem('last_session') || 'null');
         if (lastSession && lastSession.code && lastSession.name) {
-            document.getElementById('user-name').value = lastSession.name; document.getElementById('camp-code').value = lastSession.code; document.getElementById('user-role').value = lastSession.role || 'player';
-            const v = JSON.parse(localStorage.getItem('dd_vault') || '[]'); const src = v.find(x => x.name === lastSession.name) || lastSession;
+            document.getElementById('user-name').value = lastSession.name; 
+            document.getElementById('camp-code').value = lastSession.code; 
+            document.getElementById('user-role').value = lastSession.role || 'player';
+            
+            const v = JSON.parse(localStorage.getItem('dd_vault') || '[]'); 
+            const src = v.find(x => x.name === lastSession.name) || lastSession;
             me = { ...me, ...src, langs: src.langs && src.langs.length ? src.langs : ["Comune"] };
-            document.getElementById('p-race-class').value = me.info || ''; document.getElementById('p-hp').value = me.hpMax; document.getElementById('p-ac').value = me.ac;
+            
+            document.getElementById('p-race-class').value = me.info || ''; 
+            document.getElementById('p-hp').value = me.hpMax; 
+            document.getElementById('p-ac').value = me.ac;
             document.querySelectorAll('.lang-check').forEach(c => { if(c.value !== "Comune") c.checked = me.langs.includes(c.value); });
+            
+            // Ripristina la mappa corretta in base al ruolo (Master o Giocatore)
+            if (lastSession.role === 'master') {
+                masterActiveMap = lastSession.activeMap || 'map1';
+            } else {
+                playerLocalMap = lastSession.activeMap || 'map1';
+            }
+
             setTimeout(() => joinGame(true), 150);
         }
     };
@@ -393,7 +457,19 @@ function confirmAction(yes) {
         document.getElementById('login-ui').style.display = 'none'; document.getElementById('game-ui').style.display = 'flex';
         document.getElementById('display-name').innerText = me.name; document.getElementById('display-code').innerText = me.code;
         campaignRef = db.ref('campaigns/'+me.code);
-        localStorage.setItem('last_session', JSON.stringify({ code: me.code, name: me.name, role: me.role, photo: me.photo, info: me.info, hpMax: me.hpMax, ac: me.ac, langs: me.langs }));
+        
+        // AGGIORNAMENTO: Salvataggio della mappa attiva nel localStorage
+        localStorage.setItem('last_session', JSON.stringify({ 
+            code: me.code, 
+            name: me.name, 
+            role: me.role, 
+            photo: me.photo, 
+            info: me.info, 
+            hpMax: me.hpMax, 
+            ac: me.ac, 
+            langs: me.langs,
+            activeMap: me.role === 'master' ? masterActiveMap : playerLocalMap
+        }));
 
         if(me.role === 'master') {
             document.getElementById('master-panel').classList.remove('hidden'); document.getElementById('master-only-ui').classList.remove('hidden'); document.getElementById('master-controls').style.display = 'flex'; document.getElementById('master-fog-controls').style.display = 'flex';
@@ -497,18 +573,31 @@ function confirmAction(yes) {
     // --- VISTE DOPPIA MAPPA E TOGGLE CONDIVISIONE ---
     function getMyViewMapId() { return me.role === 'master' ? masterActiveMap : playerLocalMap; }
 
+    // AGGIORNAMENTO: Salviamo nel localStorage quando il master cambia mappa
     function switchMasterMap(mapId) {
         masterActiveMap = mapId;
         document.getElementById('btn-tab-map1').className = mapId === 'map1' ? 'map-tab-btn active' : 'map-tab-btn';
         document.getElementById('btn-tab-map2').className = mapId === 'map2' ? 'map-tab-btn active' : 'map-tab-btn';
         applyCurrentMapView();
+        updateLastSessionMap(mapId);
     }
 
+    // AGGIORNAMENTO: Salviamo nel localStorage quando il giocatore cambia mappa
     function switchPlayerMap(mapId) {
         playerLocalMap = mapId;
         document.getElementById('btn-ptab-map1').className = mapId === 'map1' ? 'map-tab-btn active' : 'map-tab-btn';
         document.getElementById('btn-ptab-map2').className = mapId === 'map2' ? 'map-tab-btn active' : 'map-tab-btn';
         applyCurrentMapView();
+        updateLastSessionMap(mapId);
+    }
+
+    // AGGIORNAMENTO: Nuova funzione per aggiornare il salvataggio locale della mappa
+    function updateLastSessionMap(mapId) {
+        const lastSession = JSON.parse(localStorage.getItem('last_session') || 'null');
+        if (lastSession) {
+            lastSession.activeMap = mapId;
+            localStorage.setItem('last_session', JSON.stringify(lastSession));
+        }
     }
 
     function toggleMapSharing() {
@@ -783,7 +872,16 @@ function switchMasterTool(tool) {
         alert(currentState ? `${name} è ora VISIBILE a tutti.` : `${name} è ora uno SPETTRO invisibile.`);
     }
 
-    function renderMapTokens() {
+function toggleSpecificTokenVisibility(tokenName) {
+        if (!cachedNPCs[tokenName]) return;
+        let currentState = cachedNPCs[tokenName].isSecret || false;
+        campaignRef.child('players').child(tokenName).update({ isSecret: !currentState });
+        
+        // Un piccolo avviso per te che conferma l'azione
+        alert(currentState ? `${tokenName} è ora VISIBILE a tutti.` : `${tokenName} è ora uno SPETTRO invisibile.`);
+    }
+
+function renderMapTokens() {
         const layer = document.getElementById('token-layer'); if(!layer) return;
         const vId = getMyViewMapId();
         const mData = mapDataCache[vId] || {};
@@ -804,7 +902,8 @@ function switchMasterTool(tool) {
 
                 if(!wrap) {
                     wrap = document.createElement('div'); wrap.id = safeId; wrap.dataset.name = p.name; wrap.className = "token-wrapper";
-                    let label = document.createElement('div'); label.className = "token-name-plate"; label.innerText = p.name; wrap.appendChild(label);
+                    let label = document.createElement('div'); label.className = "token-name-plate"; 
+                    wrap.appendChild(label);
                     let img = document.createElement('img'); img.src = p.photo; img.className = "map-token"; wrap.appendChild(img);
 
                     layer.appendChild(wrap);
@@ -836,6 +935,21 @@ function switchMasterTool(tool) {
 
                 wrap.style.width = tSize + "%";
 
+                // AGGIORNAMENTO DINAMICO DELL'ETICHETTA
+                let label = wrap.querySelector('.token-name-plate');
+                if (label) {
+                    if (me.role === 'master') {
+                        // Il master vede l'icona cliccabile per cambiare stato
+                        label.innerHTML = `${p.name} <span style="cursor:pointer; font-size:1.1em;" onclick="toggleSpecificTokenVisibility('${p.name}')">${isSecret ? '👻' : '👁️'}</span>`;
+                        // Blocchiamo il trascinamento se si clicca sull'etichetta
+                        label.onmousedown = (e) => e.stopPropagation();
+                        label.ontouchstart = (e) => e.stopPropagation();
+                    } else {
+                        // I giocatori vedono solo il nome
+                        label.innerText = p.name;
+                    }
+                }
+
                 if (isSecret) { wrap.style.opacity = '0.4'; wrap.querySelector('img').style.border = '2px dashed red'; }
                 else { wrap.style.opacity = '1'; wrap.querySelector('img').style.border = '2px solid var(--amber)'; }
 
@@ -861,7 +975,41 @@ function switchMasterTool(tool) {
         closeSettings();
     }
 
-    function openManagePG(name) { if(me.role !== 'master') return; currentTargetPG = name; document.getElementById('manage-title').innerText = "Gestione " + name; document.getElementById('modal-manage').style.display = 'flex'; showManageAction('MAIN'); }
+    function openManagePG(name) { 
+        if(me.role !== 'master') return; 
+        currentTargetPG = name; 
+        document.getElementById('manage-title').innerText = "Gestione " + name; 
+        
+        // Controlliamo lo stato attuale per mostrare il testo giusto sul bottone
+        let p = cachedNPCs[name];
+        let visBtn = document.getElementById('manage-visibility-btn');
+        if (visBtn && p) {
+            visBtn.innerHTML = p.isSecret ? "👻 Stato: NASCOSTO (Clicca per rivelare)" : "👁️ Stato: VISIBILE (Clicca per nascondere)";
+        }
+
+        document.getElementById('modal-manage').style.display = 'flex'; 
+        showManageAction('MAIN'); 
+    }
+
+    // Nuova funzione collegata al bottone nel pannello di gestione
+    function toggleManageVisibility() {
+        let p = cachedNPCs[currentTargetPG];
+        if(!p) return;
+        
+        let currentState = p.isSecret || false;
+        
+        // Invertiamo lo stato su Firebase
+        campaignRef.child('players').child(currentTargetPG).update({ isSecret: !currentState });
+        
+        // Aggiorniamo immediatamente il testo del pulsante per darti feedback visivo
+        let visBtn = document.getElementById('manage-visibility-btn');
+        if (visBtn) {
+            visBtn.innerHTML = !currentState ? "👻 Stato: NASCOSTO (Clicca per rivelare)" : "👁️ Stato: VISIBILE (Clicca per nascondere)";
+        }
+        
+        // Avviso di conferma
+        alert(!currentState ? `${currentTargetPG} è ora uno SPETTRO invisibile.` : `${currentTargetPG} è ora VISIBILE a tutti.`);
+    }
     function showManageAction(act) { ['manage-main-menu','manage-action-input','manage-conditions-list','manage-edit-input','manage-buff-input'].forEach(id => document.getElementById(id).classList.add('hidden')); if(act==='MAIN') document.getElementById('manage-main-menu').classList.remove('hidden'); else if(act==='CONDIZIONI') { const list = document.getElementById('manage-conditions-list'); list.innerHTML = ""; list.classList.remove('hidden'); const conds = (cachedNPCs[currentTargetPG].cond || "").split(",").filter(c=>c); CONDITIONS.forEach(c => list.innerHTML += `<div class="cond-list-item">${c} <button onclick="toggleCondition('${c}')" class="btn-taverna" style="padding:2px 8px; background:${conds.includes(c)?'#b71c1c':'#2e7d32'}; color:white">${conds.includes(c)?'RIMUOVI':'AGGIUNGI'}</button></div>`); } else if(act==='EDIT') { document.getElementById('manage-edit-input').classList.remove('hidden'); let p = cachedNPCs[currentTargetPG]; document.getElementById('manage-edit-hpmax').value = p.hpMax; document.getElementById('manage-edit-ac').value = p.ac; editTempPhoto = null; } else if(act==='BUFF') { document.getElementById('manage-buff-input').classList.remove('hidden'); let p = cachedNPCs[currentTargetPG]; document.getElementById('manage-buff-hp').value = p.tempHp || ""; document.getElementById('manage-buff-ac').value = p.tempAc || ""; } else { document.getElementById('manage-action-input').classList.remove('hidden'); document.getElementById('manage-value').dataset.mode = act; } }
     function toggleCondition(c) { let p = cachedNPCs[currentTargetPG]; let arr = (p.cond||"").split(",").filter(x=>x); if(arr.includes(c)) arr = arr.filter(x=>x!==c); else arr.push(c); campaignRef.child('players').child(currentTargetPG).update({ cond: arr.join(",") }); campaignRef.child('messages').push({ sender: me.role==='master'?me.name:"Master", senderRole: 'master', photo: me.photo, text: `${currentTargetPG} ora è: ${arr.join(",")||'Normale'}`, lang: "Comune", to: 'ALL', time: Date.now(), type: 'cond' }); showManageAction('CONDIZIONI'); }
     function applyManageAction() { const mode = document.getElementById('manage-value').dataset.mode; const val = parseInt(document.getElementById('manage-value').value) || 0; let p = cachedNPCs[currentTargetPG]; let newHp = p.hp, newTempHp = p.tempHp || 0; if(mode === 'DANNI') { let dmg = val; if(newTempHp > 0){ if(dmg >= newTempHp){ dmg -= newTempHp; newTempHp = 0; }else{ newTempHp -= dmg; dmg = 0; } } newHp -= dmg; } else if(mode === 'GUARIGIONE') { newHp = Math.min(p.hpMax, newHp + val); } if(newHp < 0) newHp = 0; let msg = ""; if(mode==='DANNI') msg = newHp<=0 ? (p.type==='PC' ? `${p.name} subisce ${val} Danni e cade a terra! 0/${p.hpMax}` : `${p.name} subisce ${val} Danni ed è morto 💀`) : `${p.name} subisce ${val} Danni.` + (p.type==='PC'?` PF Attuali ${newHp}/${p.hpMax}`:""); else msg = `${p.name} recupera ${val} PF.` + (p.type==='PC'?` PF Attuali ${newHp}/${p.hpMax}`:""); campaignRef.child('players').child(currentTargetPG).update({ hp: newHp, tempHp: newTempHp }); campaignRef.child('messages').push({ sender: me.role==='master'?me.name:"Master", senderRole: 'master', photo: me.photo, text: msg, lang: "Comune", to: 'ALL', time: Date.now(), type: mode==='DANNI'?'damage':'heal' }); closeManage(); }

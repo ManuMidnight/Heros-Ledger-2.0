@@ -216,7 +216,7 @@
                 <input type="file" id="chat-audio-file" accept="audio/*" style="display:none">
                 <div id="btn-mic" class="btn-rec" onclick="toggleRecording()">🎤</div>
             </span>
-            <input type="text" id="msg-input" placeholder="Scrivi..." autocomplete="off" style="flex-grow:1;">
+            <input type="text" id="msg-input" placeholder="Scrivi... (usa {{Nome}} per non tradurre una parola)" title="Racchiudi tra doppie graffe una parola per lasciarla invariata quando viene tradotta in un'altra lingua, es: {{Aragorn}}" autocomplete="off" style="flex-grow:1;">
             <button type="submit" class="btn-taverna">OK</button>
         </form>
     </div>
@@ -398,8 +398,134 @@ function confirmAction(yes) {
 
     const ALL_LANGS = ["Comune", "Elfico", "Gigante", "Gnomesco", "Goblin", "Halfling", "Nanico", "Orchesco", "Abissale", "Celestiale", "Draconico", "Infernale", "Silvano", "Sottocomune"];
     const CONDITIONS = ["Accecato", "Affascinato", "Afferrato", "Assordato", "Avvelenato", "Incapacitato", "Invisibile", "Paralizzato", "Pietrificato", "Prono", "Spaventato", "Stordito", "Trattenuto", "Indebolito"];
-    const DICTIONARY = { "Orchesco": ["Grush", "nik"], "Elfico": ["Elia", "val"], "Nanico": ["Khazad", "dum"], "Draconico": ["Vith", "dur"], "Abissale": ["Gh’ul", "nak"], "Infernale": ["Xas", "vile"], "Gigante": ["Thrym", "jotun"], "Gnomesco": ["Boddynock", "glitter"], "Goblin": ["Riz", "gark"], "Halfling": ["Meri", "pippin"], "Celestiale": ["Aureos", "lux"], "Silvano": ["Faen", "leaf"], "Sottocomune": ["Zar", "drow"] };
-    function translateText(text, lang) { if (lang === "Comune" || !DICTIONARY[lang]) return text; return text.split(" ").map(w => DICTIONARY[lang][Math.floor(Math.random() * DICTIONARY[lang].length)] + (w.length > 4 ? "'" + DICTIONARY[lang][0] : "")).join(" ") + "?"; }
+    // --- GENERATORE LINGUISTICO A RADICI + SUFFISSI/PREFISSI ---
+    // Ogni lingua ha un pool di radici (il "cuore" semantico) e suffissi (desinenze),
+    // più prefissi opzionali usati con una certa probabilità per creare parole più lunghe/composte.
+    // I set sono ispirati al lore di D&D e ad altri fantasy classici (Tolkien, ecc.) per dare
+    // un'impronta fonetica coerente a ciascuna lingua invece di pescare parole a caso.
+    const LANG_ROOTS = {
+        "Orchesco": { // gutturale, aspro, ispirato all'Orchesco di D&D e alla Lingua Nera tolkieniana
+            prefixes: ["Uzg", "Mog", "Grum", "Nazg", "Uruk"],
+            roots: ["Grum", "Uzg", "Mog", "Thrak", "Gor", "Krag", "Snag", "Bok", "Rag", "Dush"],
+            suffixes: ["ash", "uk", "og", "ub", "ar", "dush", "gar", "nak", "ug", "az"]
+        },
+        "Elfico": { // fluido e melodico, ispirato al Sindarin/Quenya e all'Elfico di D&D
+            prefixes: ["El", "Cael", "Ithil", "Sil", "Gal"],
+            roots: ["El", "Sil", "Ala", "Fen", "Thal", "Ely", "Cael", "Ithil", "Gal", "Ser"],
+            suffixes: ["wen", "iel", "eth", "dor", "rion", "anor", "lin", "ara", "wyn", "las"]
+        },
+        "Nanico": { // duro, gutturale, ispirato al Khuzdul e al Nanico di D&D (Khazad-dûm)
+            prefixes: ["Khaz", "Thrag", "Bal", "Grim", "Thor"],
+            roots: ["Khaz", "Dur", "Bar", "Thrag", "Grim", "Bal", "Fun", "Nor", "Kar", "Thor"],
+            suffixes: ["in", "or", "dum", "ak", "grim", "ur", "din", "nor", "gard", "ok"]
+        },
+        "Draconico": { // sonoro e possente, ispirato al Draconico di D&D
+            prefixes: ["Vor", "Bahar", "Xir", "Zar", "Dral"],
+            roots: ["Vith", "Dral", "Bahar", "Kryx", "Zar", "Thal", "Xir", "Vor", "Rhaesh", "Kaal"],
+            suffixes: ["dur", "ax", "oth", "ir", "und", "esh", "shar", "aan", "ryth", "os"]
+        },
+        "Abissale": { // caotico e distorto, ispirato all'Abissale di D&D (demoni)
+            prefixes: ["Ghul", "Xath", "Zul", "Baal", "Yog"],
+            roots: ["Ghul", "Vor", "Xath", "Mal", "Kra", "Zul", "Yog", "Baal", "Nurg", "Chth"],
+            suffixes: ["nak", "oth", "ith", "ax", "ul", "grash", "urgh", "azz", "khor", "un"]
+        },
+        "Infernale": { // rigido e legalistico, ispirato all'Infernale di D&D (diavoli, latinismi)
+            prefixes: ["Bael", "Asmod", "Diab", "Vex", "Mor"],
+            roots: ["Xas", "Bael", "Mor", "Diab", "Vex", "Zeb", "Asmod", "Mal", "Cocyt", "Styg"],
+            suffixes: ["vile", "us", "oth", "ael", "ith", "agor", "eus", "ion", "ax", "or"]
+        },
+        "Gigante": { // primordiale, semplice e tonante, ispirato ai Giganti/Jotun norreni e a D&D
+            prefixes: ["Thrym", "Jotun", "Skad", "Ymir", "Fro"],
+            roots: ["Thrym", "Jotun", "Ymir", "Skad", "Ur", "Fro", "Grun", "Karg", "Hrim", "Bol"],
+            suffixes: ["ar", "nir", "ok", "und", "gard", "uk", "heim", "drun", "olf", "grym"]
+        },
+        "Gnomesco": { // arzigogolato e tecnico, ispirato al Gnomesco di D&D
+            prefixes: ["Bod", "Tink", "Cog", "Glit", "Whir"],
+            roots: ["Bod", "Glit", "Tink", "Fiz", "Cog", "Wob", "Snick", "Whir", "Sprock", "Nim"],
+            suffixes: ["nock", "ter", "le", "witz", "bolt", "ix", "gear", "zap", "kin", "ette"]
+        },
+        "Goblin": { // rozzo, scattante, ispirato al Goblin di D&D
+            prefixes: ["Grix", "Snik", "Zag", "Rok", "Nab"],
+            roots: ["Grix", "Snik", "Zag", "Rok", "Fiz", "Nab", "Grot", "Skab", "Yek", "Mib"],
+            suffixes: ["ik", "ub", "og", "ash", "it", "uk", "az", "onk", "iz", "ub"]
+        },
+        "Halfling": { // caldo e familiare, ispirato ai nomi halfling di D&D e alla Contea tolkieniana
+            prefixes: ["Mer", "Pip", "Bram", "Tam", "Wil"],
+            roots: ["Mer", "Pip", "Rose", "Tam", "Bram", "Wil", "Hol", "Fen", "Dais", "Marig"],
+            suffixes: ["ly", "in", "ick", "berry", "den", "ot", "old", "wise", "et", "y"]
+        },
+        "Celestiale": { // luminoso e angelico, ispirato al Celestiale di D&D
+            prefixes: ["Aure", "Sol", "Ser", "Ely", "Cael"],
+            roots: ["Aure", "Sol", "Lux", "Ely", "Ser", "Ang", "Vel", "Cael", "Radi", "Aeth"],
+            suffixes: ["iel", "ion", "eus", "ara", "lis", "oth", "ael", "yon", "adiel", "os"]
+        },
+        "Silvano": { // naturale e fatato, ispirato al Silvano/Sylvan di D&D
+            prefixes: ["Faen", "Wil", "Bri", "Thist", "Mos"],
+            roots: ["Faen", "Leaf", "Thist", "Bri", "Wil", "Mos", "Fern", "Oak", "Bram", "Dew"],
+            suffixes: ["leaf", "wyn", "oth", "ara", "en", "ith", "wick", "shade", "bloom", "ryn"]
+        },
+        "Sottocomune": { // sibilante e sinistro, ispirato al Sottocomune/Undercommon (drow) di D&D
+            prefixes: ["Zar", "Xull", "Vess", "Quar", "Nal"],
+            roots: ["Zar", "Drow", "Vess", "Xull", "Nal", "Quar", "Sszz", "Vor", "Ilv", "Ral"],
+            suffixes: ["th", "iss", "ax", "yth", "ir", "orn", "esz", "ual", "ynn", "aster"]
+        }
+    };
+
+    function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+    // Genera una singola parola nello stile della lingua, combinando radice + suffisso
+    // e, con una certa probabilità, un prefisso per parole più lunghe/composte.
+    // "avoidWord" (opzionale) è l'ultima parola generata: se il risultato coincide,
+    // si ritenta (fino a un massimo di tentativi) per ridurre le ripetizioni consecutive.
+    function generateWord(lang, avoidWord) {
+        const data = LANG_ROOTS[lang];
+        if (!data) return "";
+        let word = "";
+        let tries = 0;
+        do {
+            word = pickRandom(data.roots) + pickRandom(data.suffixes);
+            if (data.prefixes && Math.random() < 0.35) word = pickRandom(data.prefixes) + word.toLowerCase();
+            word = word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+            tries++;
+        } while (avoidWord && word === avoidWord && tries < 6);
+        return word;
+    }
+
+    // Traduce un testo nella lingua scelta, mantenendo:
+    // 1) le parole "protette" tra doppie graffe {{così}} (es. nomi propri), che restano invariate
+    //    (le graffe vengono rimosse dal risultato ma il contenuto non viene tradotto);
+    // 2) la punteggiatura originale (virgole, punti, punti esclamativi, ecc.) invece di forzare
+    //    sempre un punto interrogativo finale.
+    function translateText(text, lang) {
+        if (lang === "Comune" || !LANG_ROOTS[lang]) return text;
+
+        const tokens = text.split(/(\s+)/); // mantiene anche gli spazi come token separati
+        let lastWord = null;
+
+        const result = tokens.map(token => {
+            if (/^\s+$/.test(token) || token.length === 0) return token; // spazi invariati
+
+            // Parola/segmento interamente protetto: {{Nome}} -> Nome (invariato)
+            const fullProtectedMatch = token.match(/^\{\{(.*)\}\}([.,;:!?…]*)$/);
+            if (fullProtectedMatch) {
+                lastWord = null; // un nome non "conta" come ripetizione da evitare
+                return fullProtectedMatch[1] + fullProtectedMatch[2];
+            }
+
+            // Separa la parola dalla punteggiatura finale (es. "notte," -> "notte" + ",")
+            const m = token.match(/^([^.,;:!?…]*)([.,;:!?…]*)$/);
+            const corePart = m ? m[1] : token;
+            const punct = m ? m[2] : "";
+
+            if (corePart.length === 0) return token; // token di sola punteggiatura, invariato
+
+            const newWord = generateWord(lang, lastWord);
+            lastWord = newWord;
+            return newWord + punct;
+        });
+
+        return result.join("");
+    }
 
     window.onload = () => {
         const langDiv = document.getElementById('lang-selection'); const npcLangDiv = document.getElementById('npc-lang-selection');

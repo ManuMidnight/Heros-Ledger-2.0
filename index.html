@@ -601,7 +601,13 @@ function confirmAction(yes) {
             document.getElementById('master-panel').classList.remove('hidden'); document.getElementById('master-only-ui').classList.remove('hidden'); document.getElementById('master-controls').style.display = 'flex'; document.getElementById('master-fog-controls').style.display = 'flex';
         } else {
             document.getElementById('player-whisper-ui').classList.remove('hidden');
-            campaignRef.child('players').child(me.name).update({ name: me.name, photo: me.photo, type: 'PC', info: me.info, hp: me.hp, hpMax: me.hpMax, ac: me.ac, init: 0, langs: me.langs, cond: "", tempHp: 0, tempAc: 0 });
+            campaignRef.child('players').child(me.name).once('value').then(snap => {
+                if(snap.exists()) {
+                    campaignRef.child('players').child(me.name).update({ photo: me.photo, info: me.info, langs: me.langs });
+                } else {
+                    campaignRef.child('players').child(me.name).set({ name: me.name, photo: me.photo, type: 'PC', info: me.info, hp: me.hpMax, hpMax: me.hpMax, ac: me.ac, init: 0, langs: me.langs, cond: "", tempHp: 0, tempAc: 0 });
+                }
+            });
         }
         setupSync(); setupMapInteractions(); preventPullRefresh();
     }
@@ -611,6 +617,11 @@ function confirmAction(yes) {
         syncJoinTime = Date.now();
         campaignRef.child('players').on('value', snap => {
             const bar = document.getElementById('party-bar'); bar.innerHTML = ""; const ps = snap.val() || {};
+            if (me.role !== 'master' && ps[me.name]) {
+                me.hp = ps[me.name].hp;
+                me.hpMax = ps[me.name].hpMax;
+                me.ac = ps[me.name].ac;
+            }
             const sel = document.getElementById('msg-recipient'); const pSel = document.getElementById('player-msg-recipient'); const multi = document.getElementById('multi-selector'); const senderChoice = document.getElementById('sender-choice'); const currentChoice = senderChoice ? senderChoice.value : "MASTER";
             if(senderChoice) senderChoice.innerHTML = '<option value="MASTER">Parla come: MASTER</option>'; if(sel) sel.innerHTML = '<option value="ALL">Destinatario: TUTTI</option><option value="MULTI">SUSSURRO MULTIPLO</option>'; if(pSel) pSel.innerHTML = '<option value="ALL">A: TUTTI</option>'; if(multi) multi.innerHTML = "";
 
@@ -1092,9 +1103,14 @@ function renderMapTokens() {
     function closeSettings() { document.getElementById('modal-settings').style.display = 'none'; }
     function saveSettings() {
         if(me.role==='master') return;
-        me.hpMax = parseInt(document.getElementById('set-hp').value)||me.hpMax;
-        me.ac = parseInt(document.getElementById('set-ac').value)||me.ac;
-        me.hp=Math.min(me.hp, me.hpMax);
+        let newHpMax = parseInt(document.getElementById('set-hp').value)||me.hpMax;
+        let newAc = parseInt(document.getElementById('set-ac').value)||me.ac;
+        let diff = newHpMax - me.hpMax;
+        me.hp = me.hp + diff;
+        if (me.hp < 0) me.hp = 0;
+        if (me.hp > newHpMax) me.hp = newHpMax;
+        me.hpMax = newHpMax;
+        me.ac = newAc;
         if(playerTempPhoto) me.photo = playerTempPhoto;
         campaignRef.child('players').child(me.name).update({ hp: me.hp, hpMax: me.hpMax, ac: me.ac, photo: me.photo });
         saveToVault(me);
@@ -1139,7 +1155,23 @@ function renderMapTokens() {
     function showManageAction(act) { ['manage-main-menu','manage-action-input','manage-conditions-list','manage-edit-input','manage-buff-input'].forEach(id => document.getElementById(id).classList.add('hidden')); if(act==='MAIN') document.getElementById('manage-main-menu').classList.remove('hidden'); else if(act==='CONDIZIONI') { const list = document.getElementById('manage-conditions-list'); list.innerHTML = ""; list.classList.remove('hidden'); const conds = (cachedNPCs[currentTargetPG].cond || "").split(",").filter(c=>c); CONDITIONS.forEach(c => list.innerHTML += `<div class="cond-list-item">${c} <button onclick="toggleCondition('${c}')" class="btn-taverna" style="padding:2px 8px; background:${conds.includes(c)?'#b71c1c':'#2e7d32'}; color:white">${conds.includes(c)?'RIMUOVI':'AGGIUNGI'}</button></div>`); } else if(act==='EDIT') { document.getElementById('manage-edit-input').classList.remove('hidden'); let p = cachedNPCs[currentTargetPG]; document.getElementById('manage-edit-hpmax').value = p.hpMax; document.getElementById('manage-edit-ac').value = p.ac; editTempPhoto = null; } else if(act==='BUFF') { document.getElementById('manage-buff-input').classList.remove('hidden'); let p = cachedNPCs[currentTargetPG]; document.getElementById('manage-buff-hp').value = p.tempHp || ""; document.getElementById('manage-buff-ac').value = p.tempAc || ""; } else { document.getElementById('manage-action-input').classList.remove('hidden'); document.getElementById('manage-value').dataset.mode = act; } }
     function toggleCondition(c) { let p = cachedNPCs[currentTargetPG]; let arr = (p.cond||"").split(",").filter(x=>x); if(arr.includes(c)) arr = arr.filter(x=>x!==c); else arr.push(c); campaignRef.child('players').child(currentTargetPG).update({ cond: arr.join(",") }); campaignRef.child('messages').push({ sender: me.role==='master'?me.name:"Master", senderRole: 'master', photo: me.photo, text: `${currentTargetPG} ora è: ${arr.join(",")||'Normale'}`, lang: "Comune", to: 'ALL', time: Date.now(), type: 'cond' }); showManageAction('CONDIZIONI'); }
     function applyManageAction() { const mode = document.getElementById('manage-value').dataset.mode; const val = parseInt(document.getElementById('manage-value').value) || 0; let p = cachedNPCs[currentTargetPG]; let newHp = p.hp, newTempHp = p.tempHp || 0; if(mode === 'DANNI') { let dmg = val; if(newTempHp > 0){ if(dmg >= newTempHp){ dmg -= newTempHp; newTempHp = 0; }else{ newTempHp -= dmg; dmg = 0; } } newHp -= dmg; } else if(mode === 'GUARIGIONE') { newHp = Math.min(p.hpMax, newHp + val); } if(newHp < 0) newHp = 0; let msg = ""; if(mode==='DANNI') msg = newHp<=0 ? (p.type==='PC' ? `${p.name} subisce ${val} Danni e cade a terra! 0/${p.hpMax}` : `${p.name} subisce ${val} Danni ed è morto 💀`) : `${p.name} subisce ${val} Danni.` + (p.type==='PC'?` PF Attuali ${newHp}/${p.hpMax}`:""); else msg = `${p.name} recupera ${val} PF.` + (p.type==='PC'?` PF Attuali ${newHp}/${p.hpMax}`:""); campaignRef.child('players').child(currentTargetPG).update({ hp: newHp, tempHp: newTempHp }); campaignRef.child('messages').push({ sender: me.role==='master'?me.name:"Master", senderRole: 'master', photo: me.photo, text: msg, lang: "Comune", to: 'ALL', time: Date.now(), type: mode==='DANNI'?'damage':'heal' }); closeManage(); }
-    function applyEditAction() { let p = cachedNPCs[currentTargetPG]; let up = { hpMax: parseInt(document.getElementById('manage-edit-hpmax').value)||p.hpMax, ac: parseInt(document.getElementById('manage-edit-ac').value)||p.ac }; if(editTempPhoto) up.photo = editTempPhoto; if(p.hp > up.hpMax) up.hp = up.hpMax; campaignRef.child('players').child(currentTargetPG).update(up); campaignRef.child('messages').push({ sender: me.role==='master'?me.name:"Master", senderRole: 'master', photo: me.photo, text: `⚙️ Le statistiche base di ${p.name} sono aggiornate.`, lang: "Comune", to: 'ALL', time: Date.now() }); closeManage(); }
+    
+    function applyEditAction() { 
+        let p = cachedNPCs[currentTargetPG]; 
+        let newHpMax = parseInt(document.getElementById('manage-edit-hpmax').value)||p.hpMax; 
+        let newAc = parseInt(document.getElementById('manage-edit-ac').value)||p.ac; 
+        let up = { hpMax: newHpMax, ac: newAc }; 
+        if(editTempPhoto) up.photo = editTempPhoto; 
+        let diff = newHpMax - p.hpMax; 
+        let newHp = p.hp + diff; 
+        if (newHp < 0) newHp = 0; 
+        if (newHp > newHpMax) newHp = newHpMax; 
+        up.hp = newHp; 
+        campaignRef.child('players').child(currentTargetPG).update(up); 
+        campaignRef.child('messages').push({ sender: me.role==='master'?me.name:"Master", senderRole: 'master', photo: me.photo, text: `⚙️ Le statistiche base di ${p.name} sono aggiornate.`, lang: "Comune", to: 'ALL', time: Date.now() }); 
+        closeManage(); 
+    }
+    
     function applyBuffAction() { let p = cachedNPCs[currentTargetPG]; const tHp = parseInt(document.getElementById('manage-buff-hp').value)||0, tAc = parseInt(document.getElementById('manage-buff-ac').value)||0; campaignRef.child('players').child(currentTargetPG).update({ tempHp: tHp, tempAc: tAc }); campaignRef.child('messages').push({ sender: me.role==='master'?me.name:"Master", senderRole: 'master', photo: me.photo, text: `✨ ${p.name} riceve dei buff!` + (tHp>0?` (+${tHp} PF Temp)`:"") + (tAc!==0?` (${tAc>0?'+'+tAc:tAc} CA)`:""), lang: "Comune", to: 'ALL', time: Date.now(), type: 'heal' }); closeManage(); }
     function closeManage() { document.getElementById('modal-manage').style.display = 'none'; document.getElementById('manage-value').value = ""; editTempPhoto = null; }
 

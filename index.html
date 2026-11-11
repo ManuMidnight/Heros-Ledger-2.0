@@ -2590,14 +2590,20 @@
             });
         }
     </script>
-<!-- ===== ADD-ON GRIGLIA + INCANTESIMI + COPERTURE =====
-     Incolla TUTTO questo blocco nel tuo file, subito prima di </body> (dopo l'ultimo </script>). -->
+<!-- ===== ADD-ON GRIGLIA + INCANTESIMI v2 =====
+     Cancella il vecchio blocco (da "ADD-ON GRIGLIA" a "FINE ADD-ON") e incolla questo prima di </body>. -->
 <style>
 #grid-canvas,#spell-canvas{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
-.sp-row{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;align-items:center;margin-bottom:6px;font-size:.72rem;color:var(--amber)}
-.sp-row input,.sp-row select{width:auto;margin:0;padding:5px;font-size:.75rem}
-.sp-row input[type=number]{width:56px}
-#sp-results{max-height:110px;overflow-y:auto;touch-action:pan-y;text-align:left;font-size:.72rem;color:#fff;background:rgba(0,0,0,.4);border-radius:4px;padding:4px}
+.sp-row{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;align-items:center;margin-bottom:7px;font-size:.75rem;color:var(--amber)}
+.sp-row input,.sp-row select{width:auto;margin:0;padding:6px;font-size:.8rem}
+.sp-row input[type=number]{width:60px}
+.sp-b{background:#444;color:#fff;border:1px solid var(--gold);border-radius:4px;width:30px;height:30px;font-size:1rem;cursor:pointer}
+.sp-step{color:#fff;background:rgba(255,255,255,.08);border-radius:10px;padding:1px 8px;font-size:.65rem}
+#sp-card{position:absolute;top:6px;left:6px;right:6px;max-height:36%;overflow-y:auto;touch-action:pan-y;display:none;z-index:30;
+ background:rgba(20,12,8,.93);border:1px solid var(--gold);border-radius:8px;padding:8px 26px 8px 10px;font-size:.8rem;color:#fff;text-align:left}
+#sp-x{position:absolute;top:4px;right:8px;cursor:pointer;color:#ff8a80}
+#sp-toast{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:var(--amber);color:#000;font-weight:bold;
+ padding:6px 12px;border-radius:14px;font-size:.8rem;z-index:40;display:none;pointer-events:none;white-space:nowrap}
 .sp-ok{color:#69f0ae}.sp-no{color:#ff8a80}.sp-cov{color:#ffd54f}
 </style>
 
@@ -2605,80 +2611,85 @@
 (function(){
 const $=id=>document.getElementById(id);
 const wrapper=$('map-wrapper'), img=$('zoomable-img'), zc=$('zoom-container');
-
-/* --- UI --- */
 const GC=document.createElement('canvas');GC.id='grid-canvas';
 const SC=document.createElement('canvas');SC.id='spell-canvas';
-wrapper.insertBefore(GC,$('fog-canvas'));
-wrapper.appendChild(SC);
+wrapper.insertBefore(GC,$('fog-canvas'));wrapper.appendChild(SC);
 
+/* ---------- UI ---------- */
+document.querySelector('#master-fog-controls > div').style.flexWrap='wrap';
 document.querySelector('#master-fog-controls > div').insertAdjacentHTML('beforeend',
- '<button id="tab-tool-grid" class="map-tab-btn" onclick="switchMasterTool(\'grid\')">📏 Griglia</button>');
+ '<button id="tab-tool-grid" class="map-tab-btn" onclick="switchMasterTool(\'grid\')">📏 Griglia / Incantesimi</button>');
+
+const PRESETS=[['✏️ Personalizzato','single',120,20,5],['Dardo incantato / Raggio','single',120,0,5],['Palla di fuoco','sphere',150,20,5],
+ ['Nube di nebbia','sphere',120,20,5],['Mani brucianti','cone',0,15,5],['Cono di freddo','cone',0,60,5],['Fulmine','line',0,100,5],['Tempesta di ghiaccio (cubo 20)','cube',300,20,5]];
 
 document.querySelector('.map-controls-grid').insertAdjacentHTML('beforeend',`
 <div id="tool-group-grid" class="map-control-group hidden">
- <div class="sp-row">
-  <label><input type="checkbox" id="sp-on"> Griglia</label>
-  Quadretti in larghezza: <input type="number" id="sp-cols" min="5" max="150">
-  1 quad. = <input type="number" id="sp-ft" min="1"> ft
-  <button class="btn-taverna" style="padding:5px 8px" onclick="spSaveGrid()">💾 Salva</button>
+ <div class="sp-row"><span class="sp-step">1</span>
+  <label style="color:#fff"><input type="checkbox" id="sp-on" onchange="spGrid()"> Griglia</label>
+  <button class="sp-b" onclick="spStep(-1)">−</button><b id="sp-colsv" style="color:#fff">30</b><button class="sp-b" onclick="spStep(1)">+</button> quadretti
+  1 quad. = <select id="sp-ft" onchange="spGrid()"><option>5</option><option>10</option><option>15</option><option>20</option></select> ft
+ </div>
+ <div class="sp-row"><span class="sp-step">2</span>
+  <select id="sp-caster" onchange="spCalc()"></select>
+  <select id="sp-preset" onchange="spPreset()">${PRESETS.map((p,i)=>`<option value="${i}">${p[0]}</option>`).join('')}</select>
+  <select id="sp-shape" onchange="spParams()"><option value="single">Singolo</option><option value="sphere">Sfera</option><option value="cube">Cubo</option><option value="cone">Cono</option><option value="line">Linea</option></select>
  </div>
  <div class="sp-row">
-  <select id="sp-caster"></select>
-  <select id="sp-shape" onchange="spCalc()">
-   <option value="single">Bersaglio singolo</option>
-   <option value="sphere">Sfera / Cerchio</option>
-   <option value="cube">Cubo</option>
-   <option value="cone">Cono</option>
-   <option value="line">Linea</option>
-  </select>
+  <span id="sp-rw">Gittata <input type="number" id="sp-range" value="120" oninput="spCalc()"></span>
+  <span id="sp-sw">Dim. <input type="number" id="sp-size" value="20" oninput="spCalc()"></span>
+  <span id="sp-lw">Largh. <input type="number" id="sp-width" value="5" oninput="spCalc()"></span> ft
  </div>
- <div class="sp-row">
-  Gittata <input type="number" id="sp-range" value="120" oninput="spCalc()">
-  Dim. (raggio/lato/lungh.) <input type="number" id="sp-size" value="20" oninput="spCalc()">
-  Largh. linea <input type="number" id="sp-width" value="5" oninput="spCalc()">
+ <div class="sp-row"><span class="sp-step">3</span>
+  <button id="btn-sp-aim" class="btn-taverna" style="padding:8px 16px;font-size:.9rem" onclick="spMode('aim')">🎯 Mira</button>
+  <button id="btn-sp-wall" class="btn-taverna" style="padding:8px 10px" onclick="spMode('wall')">🧱 Coperture</button>
  </div>
- <div class="sp-row">
-  <button id="btn-sp-aim" class="btn-taverna" style="padding:5px 8px" onclick="spMode('aim')">🎯 Mira</button>
-  <button id="btn-sp-wall" class="btn-taverna" style="padding:5px 8px" onclick="spMode('wall')">🧱 Disegna copertura</button>
+ <div id="sp-wallrow" class="sp-row hidden">
   <select id="sp-cover"><option value="2">Mezza (+2)</option><option value="5">Tre quarti (+5)</option><option value="99">Totale</option></select>
-  <button class="btn-taverna" style="padding:5px 8px" onclick="spUndoWall()">↩️</button>
-  <button class="btn-taverna" style="padding:5px 8px;background:#b71c1c;color:#fff" onclick="spClearWalls()">🗑️</button>
+  <button class="sp-b" title="Annulla ultima" onclick="spUndoWall()">↩️</button>
+  <button class="sp-b" title="Cancella tutte" style="background:#b71c1c" onclick="spClearWalls()">🗑️</button>
  </div>
- <div id="sp-results">Attiva la griglia, scegli lanciatore e forma, poi premi 🎯 Mira e tocca/trascina sulla mappa.</div>
 </div>`);
+zc.insertAdjacentHTML('beforeend','<div id="sp-card"><span id="sp-x" onclick="this.parentNode.style.display=\'none\'">✕</span><div id="sp-res"></div></div><div id="sp-toast"></div>');
+['mousedown','touchstart','touchmove'].forEach(ev=>$('sp-card').addEventListener(ev,e=>e.stopPropagation(),{passive:true}));
 
-/* --- stato --- */
-let mode=null,target=null,wallStart=null,wallEnd=null,lastMap=null,last=null,down=false;
-const cfg=()=>Object.assign({on:false,cols:30,ft:5},(mapDataCache[getMyViewMapId()]||{}).grid||{});
+/* ---------- stato ---------- */
+let mode=null,target=null,wallStart=null,wallEnd=null,lastMap=null,last=null,down=false,tt;
+const vid=()=>getMyViewMapId();
+const cfg=()=>Object.assign({on:false,cols:30,ft:5},(mapDataCache[vid()]||{}).grid||{});
 const panelOpen=()=>me.role==='master'&&!$('tool-group-grid').classList.contains('hidden');
-
+function toast(t){const e=$('sp-toast');e.textContent=t;e.style.display='block';clearTimeout(tt);tt=setTimeout(()=>e.style.display='none',2200);}
+function card(h){$('sp-res').innerHTML=h;$('sp-card').style.display='block';}
 function tokens(){
- const v=getMyViewMapId(),w=img.clientWidth,h=img.clientHeight;
- return Object.values(cachedNPCs).filter(p=>p[v+'_x']>=0&&p[v+'_y']>=0)
-  .map(p=>({p,x:p[v+'_x']/100*w,y:p[v+'_y']/100*h}));
+ const v=vid(),w=img.clientWidth,h=img.clientHeight;
+ return Object.values(cachedNPCs).filter(p=>p[v+'_x']>=0&&p[v+'_y']>=0).map(p=>({p,x:p[v+'_x']/100*w,y:p[v+'_y']/100*h}));
 }
 function walls(){
- const v=getMyViewMapId(),w=img.clientWidth,h=img.clientHeight;
- return Object.values((mapDataCache[v]||{}).walls||{}).map(o=>({x1:o.x1*w/100,y1:o.y1*h/100,x2:o.x2*w/100,y2:o.y2*h/100,t:+o.t}));
+ const w=img.clientWidth,h=img.clientHeight;
+ return Object.values((mapDataCache[vid()]||{}).walls||{}).map(o=>({x1:o.x1*w/100,y1:o.y1*h/100,x2:o.x2*w/100,y2:o.y2*h/100,t:+o.t}));
 }
 const wcol=t=>t>=99?'#f44336':t===5?'#ff9800':'#ffd54f';
+function problems(){
+ const p=[];
+ if(!(mapDataCache[vid()]||{}).url)p.push('Carica una mappa (🗺️ CARICA)');
+ if(!cfg().on)p.push('Attiva la griglia (spunta 📏 Griglia)');
+ if(!tokens().length)p.push('Piazza almeno un token (♟️ Token → ➕ Piazza)');
+ return p;
+}
 
-/* --- disegno --- */
+/* ---------- disegno ---------- */
 function drawGrid(){
  const g=cfg(),w=img.clientWidth,h=img.clientHeight;
  GC.width=w;GC.height=h;
  const c=GC.getContext('2d');c.clearRect(0,0,w,h);
  if(!g.on||!w)return;
  const s=w/g.cols;
- c.strokeStyle='rgba(255,255,255,.4)';c.lineWidth=1;c.beginPath();
+ c.strokeStyle='rgba(255,255,255,.45)';c.lineWidth=1;c.beginPath();
  for(let x=0;x<=w+1;x+=s){c.moveTo(x,0);c.lineTo(x,h);}
  for(let y=0;y<=h+1;y+=s){c.moveTo(0,y);c.lineTo(w,y);}
  c.stroke();
 }
-function seg(c,x1,y1,x2,y2,t){
- c.strokeStyle=wcol(t);c.lineWidth=4;c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke();
-}
+function seg(c,x1,y1,x2,y2,t){c.strokeStyle=wcol(t);c.lineWidth=4;c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke();}
 function drawSpell(){
  const w=img.clientWidth,h=img.clientHeight;
  SC.width=w;SC.height=h;
@@ -2687,56 +2698,38 @@ function drawSpell(){
  walls().forEach(o=>seg(c,o.x1,o.y1,o.x2,o.y2,o.t));
  if(wallStart&&wallEnd)seg(c,wallStart.x,wallStart.y,wallEnd.x,wallEnd.y,+$('sp-cover').value);
  if(!last)return;
- const {shape,C,P,L,d,lw,range,pxFt}=last;
+ const {shape,C,P,L,d,lw,range,pxFt,cell}=last,n={x:-d.y,y:d.x};
  c.fillStyle='rgba(255,60,60,.3)';c.strokeStyle='#ff5252';c.lineWidth=2;
- if(range&&shape!=='cone'&&shape!=='line'){
-  c.save();c.setLineDash([6,4]);c.strokeStyle='#40c4ff';
-  const r=range*pxFt;c.strokeRect(C.x-r,C.y-r,2*r,2*r);c.restore();
- }
+ if(range&&shape!=='cone'&&shape!=='line'){c.save();c.setLineDash([6,4]);c.strokeStyle='#40c4ff';const r=range*pxFt;c.strokeRect(C.x-r,C.y-r,2*r,2*r);c.restore();}
  c.beginPath();
- const n={x:-d.y,y:d.x};
  if(shape==='sphere')c.arc(P.x,P.y,L,0,7);
  else if(shape==='cube')c.rect(P.x-L/2,P.y-L/2,L,L);
- else if(shape==='single')c.arc(P.x,P.y,last.cell*.4,0,7);
- else if(shape==='cone'){
-  c.moveTo(C.x,C.y);
-  c.lineTo(C.x+d.x*L+n.x*L/2,C.y+d.y*L+n.y*L/2);
-  c.lineTo(C.x+d.x*L-n.x*L/2,C.y+d.y*L-n.y*L/2);c.closePath();
- }else{
-  const hw=lw*pxFt/2;
-  c.moveTo(C.x+n.x*hw,C.y+n.y*hw);
-  c.lineTo(C.x+d.x*L+n.x*hw,C.y+d.y*L+n.y*hw);
-  c.lineTo(C.x+d.x*L-n.x*hw,C.y+d.y*L-n.y*hw);
-  c.lineTo(C.x-n.x*hw,C.y-n.y*hw);c.closePath();
- }
+ else if(shape==='single')c.arc(P.x,P.y,cell*.4,0,7);
+ else if(shape==='cone'){c.moveTo(C.x,C.y);c.lineTo(C.x+d.x*L+n.x*L/2,C.y+d.y*L+n.y*L/2);c.lineTo(C.x+d.x*L-n.x*L/2,C.y+d.y*L-n.y*L/2);c.closePath();}
+ else{const hw=lw*pxFt/2;c.moveTo(C.x+n.x*hw,C.y+n.y*hw);c.lineTo(C.x+d.x*L+n.x*hw,C.y+d.y*L+n.y*hw);c.lineTo(C.x+d.x*L-n.x*hw,C.y+d.y*L-n.y*hw);c.lineTo(C.x-n.x*hw,C.y-n.y*hw);c.closePath();}
  c.fill();c.stroke();
 }
 function redraw(){drawGrid();drawSpell();}
 
-/* --- geometria / regole --- */
+/* ---------- regole ---------- */
 const cross=(p,q,r)=>(q.x-p.x)*(r.y-p.y)-(q.y-p.y)*(r.x-p.x);
 const segX=(a,b,c,e)=>cross(a,b,c)*cross(a,b,e)<0&&cross(c,e,a)*cross(c,e,b)<0;
-function ptSeg(p,a,b){
- const dx=b.x-a.x,dy=b.y-a.y,l=dx*dx+dy*dy||1;
- let u=((p.x-a.x)*dx+(p.y-a.y)*dy)/l;u=Math.max(0,Math.min(1,u));
- return Math.hypot(p.x-a.x-u*dx,p.y-a.y-u*dy);
-}
+function ptSeg(p,a,b){const dx=b.x-a.x,dy=b.y-a.y,l=dx*dx+dy*dy||1;let u=((p.x-a.x)*dx+(p.y-a.y)*dy)/l;u=Math.max(0,Math.min(1,u));return Math.hypot(p.x-a.x-u*dx,p.y-a.y-u*dy);}
 const covLabel=c=>c>=99?'TOTALE (non colpibile)':c===5?'tre quarti (+5 CA/TS Des)':c===2?'mezza (+2 CA/TS Des)':'nessuna';
 
 function calc(){
- const g=cfg(),w=img.clientWidth,out=$('sp-results');
+ const pr=problems();
+ if(pr.length){card('<b>Prima di lanciare:</b><br>'+pr.map(x=>'⚠️ '+x).join('<br>'));last=null;drawSpell();return;}
  const T=tokens(),cn=$('sp-caster').value,Ct=T.find(t=>t.p.name===cn);
- if(!g.on||!w){out.innerHTML='⚠️ Attiva e salva la griglia per questa mappa.';last=null;drawSpell();return;}
- if(!Ct){out.innerHTML='⚠️ Scegli un lanciatore presente in mappa.';last=null;drawSpell();return;}
- if(!target){out.innerHTML='Premi 🎯 Mira e tocca (o trascina) sulla mappa.';drawSpell();return;}
- const cell=w/g.cols,pxFt=cell/g.ft;
+ if(!Ct){card('⚠️ Scegli il lanciatore (menu al punto 2): deve essere un token in mappa.');last=null;drawSpell();return;}
+ if(!target){card('🎯 Tocca (o trascina) sulla mappa per mirare.');drawSpell();return;}
+ const g=cfg(),w=img.clientWidth,cell=w/g.cols,pxFt=cell/g.ft;
  const shape=$('sp-shape').value,range=+$('sp-range').value||0,size=+$('sp-size').value||0,lw=+$('sp-width').value||5;
  const C={x:Ct.x,y:Ct.y},P=target,L=size*pxFt;
  const len=Math.hypot(P.x-C.x,P.y-C.y)||1,d={x:(P.x-C.x)/len,y:(P.y-C.y)/len};
- const dist=(a,b)=>Math.round(Math.max(Math.abs(a.x-b.x),Math.abs(a.y-b.y))/cell)*g.ft; // regola 5e: diagonali = 5 ft
+ const dist=(a,b)=>Math.round(Math.max(Math.abs(a.x-b.x),Math.abs(a.y-b.y))/cell)*g.ft;
  const O=(shape==='sphere'||shape==='cube')?P:C;
  last={shape,C,P,L,d,lw,range,pxFt,cell};
-
  const inArea=t=>{
   const v={x:t.x-O.x,y:t.y-O.y};
   if(shape==='single')return Math.hypot(t.x-P.x,t.y-P.y)<=cell*.75;
@@ -2750,65 +2743,45 @@ function calc(){
  const cover=t=>{
   let c=0;
   W.forEach(o=>{if(segX(O,t,{x:o.x1,y:o.y1},{x:o.x2,y:o.y2}))c=Math.max(c,o.t);});
-  if(c<99)T.forEach(o=>{ // altre creature in mezzo = mezza copertura
+  if(c<99)T.forEach(o=>{
    if(o===t||o.p.name===cn)return;
    if(Math.hypot(o.x-O.x,o.y-O.y)<cell*.5||Math.hypot(o.x-t.x,o.y-t.y)<cell*.5)return;
    if(ptSeg(o,O,t)<cell*.4)c=Math.max(c,2);
   });
   return c;
  };
-
  let html='';
- if(shape==='cone'||shape==='line'){
-  html+=`<div>Origine: <b>${cn}</b> (${shape==='cone'?'cono':'linea'} ${size} ft)</div>`;
- }else{
-  const dp=dist(C,P),ok=!range||dp<=range;
-  html+=`<div class="${ok?'sp-ok':'sp-no'}">Punto scelto a <b>${dp} ft</b> (gittata ${range||'—'} ft): ${ok?'✅ IN GITTATA':'❌ FUORI GITTATA'}</div>`;
- }
- const hits=T.filter(t=>{
-  if(t.p.name===cn&&(shape==='single'||shape==='cone'||shape==='line'))return false;
-  return inArea(t);
- });
+ if(shape==='cone'||shape==='line')html+=`<div>Origine: <b>${cn}</b> — ${shape==='cone'?'cono':'linea'} da ${size} ft</div>`;
+ else{const dp=dist(C,P),ok=!range||dp<=range;html+=`<div class="${ok?'sp-ok':'sp-no'}">Punto a <b>${dp} ft</b> (gittata ${range||'—'}): ${ok?'✅ IN GITTATA':'❌ FUORI GITTATA'}</div>`;}
+ const hits=T.filter(t=>!(t.p.name===cn&&(shape==='single'||shape==='cone'||shape==='line'))&&inArea(t));
  if(!hits.length)html+='<div>Nessun bersaglio nell\'area.</div>';
  hits.forEach(t=>{
-  const c=cover(t),ac=(+t.p.ac||0)+(+t.p.tempAc||0);
-  const cls=c>=99?'sp-no':c>0?'sp-cov':'sp-ok';
-  const acTxt=c>=99?'':` — CA ${ac}${c?'→'+(ac+c):''}`;
-  html+=`<div class="${cls}">• <b>${t.p.name}</b> — ${dist(C,t)} ft dal lanciatore — copertura: ${covLabel(c)}${acTxt}</div>`;
+  const c=cover(t),ac=(+t.p.ac||0)+(+t.p.tempAc||0),cls=c>=99?'sp-no':c>0?'sp-cov':'sp-ok';
+  html+=`<div class="${cls}">• <b>${t.p.name}</b> — ${dist(C,t)} ft — copertura: ${covLabel(c)}${c>=99?'':` — CA ${ac}${c?'→'+(ac+c):''}`}</div>`;
  });
- out.innerHTML=html;
- drawSpell();
+ card(html);drawSpell();
 }
 
-/* --- interazione mappa (solo master, con strumento attivo) --- */
+/* ---------- interazione mappa ---------- */
 function pt(e){
- const t=(e.touches&&e.touches[0])||(e.changedTouches&&e.changedTouches[0])||e;
- const r=wrapper.getBoundingClientRect();
+ const t=(e.touches&&e.touches[0])||(e.changedTouches&&e.changedTouches[0])||e,r=wrapper.getBoundingClientRect();
  return {x:(t.clientX-r.left)/r.width*img.clientWidth,y:(t.clientY-r.top)/r.height*img.clientHeight};
 }
 function st(e){
- if(!mode||me.role!=='master')return;
+ if(!mode||me.role!=='master'||e.target.closest('#sp-card'))return;
  e.preventDefault();e.stopImmediatePropagation();down=true;
  const p=pt(e);
  if(mode==='aim'){target=p;calc();}else{wallStart=p;wallEnd=p;}
 }
-function mv(e){
- if(!down)return;
- e.preventDefault();
- const p=pt(e);
- if(mode==='aim'){target=p;calc();}else{wallEnd=p;drawSpell();}
-}
+function mv(e){if(!down)return;e.preventDefault();const p=pt(e);if(mode==='aim'){target=p;calc();}else{wallEnd=p;drawSpell();}}
 function en(){
- if(!down)return;
- down=false;
+ if(!down)return;down=false;
  if(mode==='wall'&&wallStart&&wallEnd){
   const w=img.clientWidth,h=img.clientHeight,cell=w/cfg().cols;
   if(Math.hypot(wallEnd.x-wallStart.x,wallEnd.y-wallStart.y)>cell*.3){
    campaignRef.child('maps').child(masterActiveMap).child('walls').push({
-    x1:+(wallStart.x/w*100).toFixed(2),y1:+(wallStart.y/h*100).toFixed(2),
-    x2:+(wallEnd.x/w*100).toFixed(2),y2:+(wallEnd.y/h*100).toFixed(2),
-    t:+$('sp-cover').value
-   });
+    x1:+(wallStart.x/w*100).toFixed(2),y1:+(wallStart.y/h*100).toFixed(2),x2:+(wallEnd.x/w*100).toFixed(2),y2:+(wallEnd.y/h*100).toFixed(2),t:+$('sp-cover').value});
+   toast('Copertura aggiunta ✔');
   }
   wallStart=wallEnd=null;drawSpell();
  }
@@ -2820,61 +2793,67 @@ zc.addEventListener('touchmove',mv,{passive:false});
 window.addEventListener('mouseup',en);
 zc.addEventListener('touchend',en);
 
-/* --- funzioni pannello --- */
+/* ---------- pannello ---------- */
+function setGrid(g){
+ const v=masterActiveMap;(mapDataCache[v]=mapDataCache[v]||{}).grid=g;
+ redraw();campaignRef.child('maps').child(v).child('grid').set(g);
+ toast(!(mapDataCache[v].url)?'Carica prima una mappa 🗺️':g.on?'Griglia attiva ✔':'Griglia disattivata');
+}
+window.spGrid=()=>setGrid({on:$('sp-on').checked,cols:parseInt($('sp-colsv').textContent)||30,ft:parseInt($('sp-ft').value)||5});
+window.spStep=d=>{const c=Math.max(5,Math.min(150,(parseInt($('sp-colsv').textContent)||30)+d));$('sp-colsv').textContent=c;$('sp-on').checked=true;spGrid();};
+window.spParams=function(){
+ const s=$('sp-shape').value;
+ $('sp-rw').style.display=(s==='cone'||s==='line')?'none':'';
+ $('sp-sw').style.display=s==='single'?'none':'';
+ $('sp-lw').style.display=s==='line'?'':'none';
+ $('sp-sw').firstChild.textContent=s==='sphere'?'Raggio ':s==='cube'?'Lato ':'Lungh. ';
+ calc();
+};
+window.spPreset=function(){
+ const p=PRESETS[+$('sp-preset').value];
+ if(+$('sp-preset').value>0){$('sp-shape').value=p[1];$('sp-range').value=p[2];$('sp-size').value=p[3];$('sp-width').value=p[4];}
+ if(!cfg().on)setGrid(Object.assign(cfg(),{on:true}));
+ spParams();
+ if(mode!=='aim')spMode('aim');
+ if(!target)toast('Ora tocca la mappa per mirare 🎯');
+};
 window.spMode=function(m){
  mode=(mode===m)?null:m;
  $('btn-sp-aim').classList.toggle('active-tool',mode==='aim');
  $('btn-sp-wall').classList.toggle('active-tool',mode==='wall');
-};
-window.spSaveGrid=function(){
- campaignRef.child('maps').child(masterActiveMap).child('grid').set({
-  on:$('sp-on').checked,cols:Math.max(5,parseInt($('sp-cols').value)||30),ft:parseInt($('sp-ft').value)||5
- });
+ $('sp-wallrow').classList.toggle('hidden',mode!=='wall');
+ if(mode==='aim')calc();
+ else if(mode==='wall')card('🧱 Scegli il tipo di copertura e <b>trascina</b> sulla mappa per disegnare un muro/ostacolo.');
+ else card('Mappa libera: puoi spostarla e zoomare. Premi 🎯 Mira per riprendere.');
 };
 window.spCalc=calc;
-window.spUndoWall=function(){
- const ws=(mapDataCache[masterActiveMap]||{}).walls||{},k=Object.keys(ws).pop();
- if(k)campaignRef.child('maps').child(masterActiveMap).child('walls').child(k).remove();
-};
-window.spClearWalls=function(){
- if(confirm('Rimuovere tutte le coperture di questa mappa?'))
-  campaignRef.child('maps').child(masterActiveMap).child('walls').remove();
-};
-$('sp-caster').addEventListener('change',calc);
+window.spUndoWall=()=>{const ws=(mapDataCache[masterActiveMap]||{}).walls||{},k=Object.keys(ws).pop();if(k)campaignRef.child('maps').child(masterActiveMap).child('walls').child(k).remove();};
+window.spClearWalls=()=>{if(confirm('Rimuovere tutte le coperture di questa mappa?'))campaignRef.child('maps').child(masterActiveMap).child('walls').remove();};
 
 function sync(){
- const g=cfg(),a=document.activeElement;
- if(!(a&&a.closest&&a.closest('#tool-group-grid'))){
-  $('sp-on').checked=!!g.on;$('sp-cols').value=g.cols;$('sp-ft').value=g.ft;
- }
+ const g=cfg();
+ $('sp-on').checked=!!g.on;$('sp-colsv').textContent=g.cols;$('sp-ft').value=g.ft;
  const s=$('sp-caster'),names=tokens().map(t=>t.p.name),k=names.join('|');
- if(s.dataset.k!==k){
-  const old=s.value;s.innerHTML='';
-  names.forEach(n=>s.add(new Option(n,n)));
-  if(names.includes(old))s.value=old;
-  s.dataset.k=k;
- }
+ if(s.dataset.k!==k){const old=s.value;s.innerHTML='';names.forEach(n=>s.add(new Option('🧙 '+n,n)));if(names.includes(old))s.value=old;s.dataset.k=k;}
 }
 
-/* --- hook sulle funzioni esistenti --- */
+/* ---------- hook ---------- */
 const _apply=window.applyCurrentMapView;
 window.applyCurrentMapView=function(){
  _apply.apply(this,arguments);
- const v=getMyViewMapId();
- if(v!==lastMap){lastMap=v;target=null;last=null;$('sp-results').innerHTML='';}
+ const v=vid();
+ if(v!==lastMap){lastMap=v;target=null;last=null;}
  sync();redraw();
- if(last&&panelOpen())calc();
+ if(panelOpen()&&last)calc();
 };
 const _tok=window.renderMapTokens;
 window.renderMapTokens=function(){_tok.apply(this,arguments);sync();};
 const _open=window.openMapLightbox;
 window.openMapLightbox=function(){_open.apply(this,arguments);setTimeout(redraw,220);};
 window.switchMasterTool=function(t){
- ['token','fog','options','grid'].forEach(x=>{
-  $('tool-group-'+x).classList.toggle('hidden',x!==t);
-  $('tab-tool-'+x).classList.toggle('active',x===t);
- });
- if(t!=='grid'&&mode){mode=null;$('btn-sp-aim').classList.remove('active-tool');$('btn-sp-wall').classList.remove('active-tool');}
+ ['token','fog','options','grid'].forEach(x=>{$('tool-group-'+x).classList.toggle('hidden',x!==t);$('tab-tool-'+x).classList.toggle('active',x===t);});
+ if(t!=='grid'){mode=null;$('btn-sp-aim').classList.remove('active-tool');$('btn-sp-wall').classList.remove('active-tool');$('sp-wallrow').classList.add('hidden');$('sp-card').style.display='none';}
+ else{sync();spParams();const pr=problems();card(pr.length?'<b>Per iniziare:</b><br>'+pr.map(x=>'⚠️ '+x).join('<br>'):'✅ Tutto pronto. Scegli un incantesimo (punto 2) e premi 🎯 Mira.');}
  redraw();
 };
 img.addEventListener('load',()=>setTimeout(redraw,50));

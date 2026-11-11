@@ -2590,5 +2590,297 @@
             });
         }
     </script>
+<!-- ===== ADD-ON GRIGLIA + INCANTESIMI + COPERTURE =====
+     Incolla TUTTO questo blocco nel tuo file, subito prima di </body> (dopo l'ultimo </script>). -->
+<style>
+#grid-canvas,#spell-canvas{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
+.sp-row{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;align-items:center;margin-bottom:6px;font-size:.72rem;color:var(--amber)}
+.sp-row input,.sp-row select{width:auto;margin:0;padding:5px;font-size:.75rem}
+.sp-row input[type=number]{width:56px}
+#sp-results{max-height:110px;overflow-y:auto;touch-action:pan-y;text-align:left;font-size:.72rem;color:#fff;background:rgba(0,0,0,.4);border-radius:4px;padding:4px}
+.sp-ok{color:#69f0ae}.sp-no{color:#ff8a80}.sp-cov{color:#ffd54f}
+</style>
+
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const wrapper=$('map-wrapper'), img=$('zoomable-img'), zc=$('zoom-container');
+
+/* --- UI --- */
+const GC=document.createElement('canvas');GC.id='grid-canvas';
+const SC=document.createElement('canvas');SC.id='spell-canvas';
+wrapper.insertBefore(GC,$('fog-canvas'));
+wrapper.appendChild(SC);
+
+document.querySelector('#master-fog-controls > div').insertAdjacentHTML('beforeend',
+ '<button id="tab-tool-grid" class="map-tab-btn" onclick="switchMasterTool(\'grid\')">📏 Griglia</button>');
+
+document.querySelector('.map-controls-grid').insertAdjacentHTML('beforeend',`
+<div id="tool-group-grid" class="map-control-group hidden">
+ <div class="sp-row">
+  <label><input type="checkbox" id="sp-on"> Griglia</label>
+  Quadretti in larghezza: <input type="number" id="sp-cols" min="5" max="150">
+  1 quad. = <input type="number" id="sp-ft" min="1"> ft
+  <button class="btn-taverna" style="padding:5px 8px" onclick="spSaveGrid()">💾 Salva</button>
+ </div>
+ <div class="sp-row">
+  <select id="sp-caster"></select>
+  <select id="sp-shape" onchange="spCalc()">
+   <option value="single">Bersaglio singolo</option>
+   <option value="sphere">Sfera / Cerchio</option>
+   <option value="cube">Cubo</option>
+   <option value="cone">Cono</option>
+   <option value="line">Linea</option>
+  </select>
+ </div>
+ <div class="sp-row">
+  Gittata <input type="number" id="sp-range" value="120" oninput="spCalc()">
+  Dim. (raggio/lato/lungh.) <input type="number" id="sp-size" value="20" oninput="spCalc()">
+  Largh. linea <input type="number" id="sp-width" value="5" oninput="spCalc()">
+ </div>
+ <div class="sp-row">
+  <button id="btn-sp-aim" class="btn-taverna" style="padding:5px 8px" onclick="spMode('aim')">🎯 Mira</button>
+  <button id="btn-sp-wall" class="btn-taverna" style="padding:5px 8px" onclick="spMode('wall')">🧱 Disegna copertura</button>
+  <select id="sp-cover"><option value="2">Mezza (+2)</option><option value="5">Tre quarti (+5)</option><option value="99">Totale</option></select>
+  <button class="btn-taverna" style="padding:5px 8px" onclick="spUndoWall()">↩️</button>
+  <button class="btn-taverna" style="padding:5px 8px;background:#b71c1c;color:#fff" onclick="spClearWalls()">🗑️</button>
+ </div>
+ <div id="sp-results">Attiva la griglia, scegli lanciatore e forma, poi premi 🎯 Mira e tocca/trascina sulla mappa.</div>
+</div>`);
+
+/* --- stato --- */
+let mode=null,target=null,wallStart=null,wallEnd=null,lastMap=null,last=null,down=false;
+const cfg=()=>Object.assign({on:false,cols:30,ft:5},(mapDataCache[getMyViewMapId()]||{}).grid||{});
+const panelOpen=()=>me.role==='master'&&!$('tool-group-grid').classList.contains('hidden');
+
+function tokens(){
+ const v=getMyViewMapId(),w=img.clientWidth,h=img.clientHeight;
+ return Object.values(cachedNPCs).filter(p=>p[v+'_x']>=0&&p[v+'_y']>=0)
+  .map(p=>({p,x:p[v+'_x']/100*w,y:p[v+'_y']/100*h}));
+}
+function walls(){
+ const v=getMyViewMapId(),w=img.clientWidth,h=img.clientHeight;
+ return Object.values((mapDataCache[v]||{}).walls||{}).map(o=>({x1:o.x1*w/100,y1:o.y1*h/100,x2:o.x2*w/100,y2:o.y2*h/100,t:+o.t}));
+}
+const wcol=t=>t>=99?'#f44336':t===5?'#ff9800':'#ffd54f';
+
+/* --- disegno --- */
+function drawGrid(){
+ const g=cfg(),w=img.clientWidth,h=img.clientHeight;
+ GC.width=w;GC.height=h;
+ const c=GC.getContext('2d');c.clearRect(0,0,w,h);
+ if(!g.on||!w)return;
+ const s=w/g.cols;
+ c.strokeStyle='rgba(255,255,255,.4)';c.lineWidth=1;c.beginPath();
+ for(let x=0;x<=w+1;x+=s){c.moveTo(x,0);c.lineTo(x,h);}
+ for(let y=0;y<=h+1;y+=s){c.moveTo(0,y);c.lineTo(w,y);}
+ c.stroke();
+}
+function seg(c,x1,y1,x2,y2,t){
+ c.strokeStyle=wcol(t);c.lineWidth=4;c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke();
+}
+function drawSpell(){
+ const w=img.clientWidth,h=img.clientHeight;
+ SC.width=w;SC.height=h;
+ const c=SC.getContext('2d');c.clearRect(0,0,w,h);
+ if(!panelOpen())return;
+ walls().forEach(o=>seg(c,o.x1,o.y1,o.x2,o.y2,o.t));
+ if(wallStart&&wallEnd)seg(c,wallStart.x,wallStart.y,wallEnd.x,wallEnd.y,+$('sp-cover').value);
+ if(!last)return;
+ const {shape,C,P,L,d,lw,range,pxFt}=last;
+ c.fillStyle='rgba(255,60,60,.3)';c.strokeStyle='#ff5252';c.lineWidth=2;
+ if(range&&shape!=='cone'&&shape!=='line'){
+  c.save();c.setLineDash([6,4]);c.strokeStyle='#40c4ff';
+  const r=range*pxFt;c.strokeRect(C.x-r,C.y-r,2*r,2*r);c.restore();
+ }
+ c.beginPath();
+ const n={x:-d.y,y:d.x};
+ if(shape==='sphere')c.arc(P.x,P.y,L,0,7);
+ else if(shape==='cube')c.rect(P.x-L/2,P.y-L/2,L,L);
+ else if(shape==='single')c.arc(P.x,P.y,last.cell*.4,0,7);
+ else if(shape==='cone'){
+  c.moveTo(C.x,C.y);
+  c.lineTo(C.x+d.x*L+n.x*L/2,C.y+d.y*L+n.y*L/2);
+  c.lineTo(C.x+d.x*L-n.x*L/2,C.y+d.y*L-n.y*L/2);c.closePath();
+ }else{
+  const hw=lw*pxFt/2;
+  c.moveTo(C.x+n.x*hw,C.y+n.y*hw);
+  c.lineTo(C.x+d.x*L+n.x*hw,C.y+d.y*L+n.y*hw);
+  c.lineTo(C.x+d.x*L-n.x*hw,C.y+d.y*L-n.y*hw);
+  c.lineTo(C.x-n.x*hw,C.y-n.y*hw);c.closePath();
+ }
+ c.fill();c.stroke();
+}
+function redraw(){drawGrid();drawSpell();}
+
+/* --- geometria / regole --- */
+const cross=(p,q,r)=>(q.x-p.x)*(r.y-p.y)-(q.y-p.y)*(r.x-p.x);
+const segX=(a,b,c,e)=>cross(a,b,c)*cross(a,b,e)<0&&cross(c,e,a)*cross(c,e,b)<0;
+function ptSeg(p,a,b){
+ const dx=b.x-a.x,dy=b.y-a.y,l=dx*dx+dy*dy||1;
+ let u=((p.x-a.x)*dx+(p.y-a.y)*dy)/l;u=Math.max(0,Math.min(1,u));
+ return Math.hypot(p.x-a.x-u*dx,p.y-a.y-u*dy);
+}
+const covLabel=c=>c>=99?'TOTALE (non colpibile)':c===5?'tre quarti (+5 CA/TS Des)':c===2?'mezza (+2 CA/TS Des)':'nessuna';
+
+function calc(){
+ const g=cfg(),w=img.clientWidth,out=$('sp-results');
+ const T=tokens(),cn=$('sp-caster').value,Ct=T.find(t=>t.p.name===cn);
+ if(!g.on||!w){out.innerHTML='⚠️ Attiva e salva la griglia per questa mappa.';last=null;drawSpell();return;}
+ if(!Ct){out.innerHTML='⚠️ Scegli un lanciatore presente in mappa.';last=null;drawSpell();return;}
+ if(!target){out.innerHTML='Premi 🎯 Mira e tocca (o trascina) sulla mappa.';drawSpell();return;}
+ const cell=w/g.cols,pxFt=cell/g.ft;
+ const shape=$('sp-shape').value,range=+$('sp-range').value||0,size=+$('sp-size').value||0,lw=+$('sp-width').value||5;
+ const C={x:Ct.x,y:Ct.y},P=target,L=size*pxFt;
+ const len=Math.hypot(P.x-C.x,P.y-C.y)||1,d={x:(P.x-C.x)/len,y:(P.y-C.y)/len};
+ const dist=(a,b)=>Math.round(Math.max(Math.abs(a.x-b.x),Math.abs(a.y-b.y))/cell)*g.ft; // regola 5e: diagonali = 5 ft
+ const O=(shape==='sphere'||shape==='cube')?P:C;
+ last={shape,C,P,L,d,lw,range,pxFt,cell};
+
+ const inArea=t=>{
+  const v={x:t.x-O.x,y:t.y-O.y};
+  if(shape==='single')return Math.hypot(t.x-P.x,t.y-P.y)<=cell*.75;
+  if(shape==='sphere')return Math.hypot(v.x,v.y)<=L;
+  if(shape==='cube')return Math.abs(v.x)<=L/2&&Math.abs(v.y)<=L/2;
+  const pr=v.x*d.x+v.y*d.y,pe=Math.abs(-v.x*d.y+v.y*d.x);
+  if(pr<=0||pr>L)return false;
+  return shape==='cone'?pe<=pr/2:pe<=lw*pxFt/2;
+ };
+ const W=walls();
+ const cover=t=>{
+  let c=0;
+  W.forEach(o=>{if(segX(O,t,{x:o.x1,y:o.y1},{x:o.x2,y:o.y2}))c=Math.max(c,o.t);});
+  if(c<99)T.forEach(o=>{ // altre creature in mezzo = mezza copertura
+   if(o===t||o.p.name===cn)return;
+   if(Math.hypot(o.x-O.x,o.y-O.y)<cell*.5||Math.hypot(o.x-t.x,o.y-t.y)<cell*.5)return;
+   if(ptSeg(o,O,t)<cell*.4)c=Math.max(c,2);
+  });
+  return c;
+ };
+
+ let html='';
+ if(shape==='cone'||shape==='line'){
+  html+=`<div>Origine: <b>${cn}</b> (${shape==='cone'?'cono':'linea'} ${size} ft)</div>`;
+ }else{
+  const dp=dist(C,P),ok=!range||dp<=range;
+  html+=`<div class="${ok?'sp-ok':'sp-no'}">Punto scelto a <b>${dp} ft</b> (gittata ${range||'—'} ft): ${ok?'✅ IN GITTATA':'❌ FUORI GITTATA'}</div>`;
+ }
+ const hits=T.filter(t=>{
+  if(t.p.name===cn&&(shape==='single'||shape==='cone'||shape==='line'))return false;
+  return inArea(t);
+ });
+ if(!hits.length)html+='<div>Nessun bersaglio nell\'area.</div>';
+ hits.forEach(t=>{
+  const c=cover(t),ac=(+t.p.ac||0)+(+t.p.tempAc||0);
+  const cls=c>=99?'sp-no':c>0?'sp-cov':'sp-ok';
+  const acTxt=c>=99?'':` — CA ${ac}${c?'→'+(ac+c):''}`;
+  html+=`<div class="${cls}">• <b>${t.p.name}</b> — ${dist(C,t)} ft dal lanciatore — copertura: ${covLabel(c)}${acTxt}</div>`;
+ });
+ out.innerHTML=html;
+ drawSpell();
+}
+
+/* --- interazione mappa (solo master, con strumento attivo) --- */
+function pt(e){
+ const t=(e.touches&&e.touches[0])||(e.changedTouches&&e.changedTouches[0])||e;
+ const r=wrapper.getBoundingClientRect();
+ return {x:(t.clientX-r.left)/r.width*img.clientWidth,y:(t.clientY-r.top)/r.height*img.clientHeight};
+}
+function st(e){
+ if(!mode||me.role!=='master')return;
+ e.preventDefault();e.stopImmediatePropagation();down=true;
+ const p=pt(e);
+ if(mode==='aim'){target=p;calc();}else{wallStart=p;wallEnd=p;}
+}
+function mv(e){
+ if(!down)return;
+ e.preventDefault();
+ const p=pt(e);
+ if(mode==='aim'){target=p;calc();}else{wallEnd=p;drawSpell();}
+}
+function en(){
+ if(!down)return;
+ down=false;
+ if(mode==='wall'&&wallStart&&wallEnd){
+  const w=img.clientWidth,h=img.clientHeight,cell=w/cfg().cols;
+  if(Math.hypot(wallEnd.x-wallStart.x,wallEnd.y-wallStart.y)>cell*.3){
+   campaignRef.child('maps').child(masterActiveMap).child('walls').push({
+    x1:+(wallStart.x/w*100).toFixed(2),y1:+(wallStart.y/h*100).toFixed(2),
+    x2:+(wallEnd.x/w*100).toFixed(2),y2:+(wallEnd.y/h*100).toFixed(2),
+    t:+$('sp-cover').value
+   });
+  }
+  wallStart=wallEnd=null;drawSpell();
+ }
+}
+zc.addEventListener('mousedown',st,true);
+zc.addEventListener('touchstart',st,{capture:true,passive:false});
+window.addEventListener('mousemove',mv,{passive:false});
+zc.addEventListener('touchmove',mv,{passive:false});
+window.addEventListener('mouseup',en);
+zc.addEventListener('touchend',en);
+
+/* --- funzioni pannello --- */
+window.spMode=function(m){
+ mode=(mode===m)?null:m;
+ $('btn-sp-aim').classList.toggle('active-tool',mode==='aim');
+ $('btn-sp-wall').classList.toggle('active-tool',mode==='wall');
+};
+window.spSaveGrid=function(){
+ campaignRef.child('maps').child(masterActiveMap).child('grid').set({
+  on:$('sp-on').checked,cols:Math.max(5,parseInt($('sp-cols').value)||30),ft:parseInt($('sp-ft').value)||5
+ });
+};
+window.spCalc=calc;
+window.spUndoWall=function(){
+ const ws=(mapDataCache[masterActiveMap]||{}).walls||{},k=Object.keys(ws).pop();
+ if(k)campaignRef.child('maps').child(masterActiveMap).child('walls').child(k).remove();
+};
+window.spClearWalls=function(){
+ if(confirm('Rimuovere tutte le coperture di questa mappa?'))
+  campaignRef.child('maps').child(masterActiveMap).child('walls').remove();
+};
+$('sp-caster').addEventListener('change',calc);
+
+function sync(){
+ const g=cfg(),a=document.activeElement;
+ if(!(a&&a.closest&&a.closest('#tool-group-grid'))){
+  $('sp-on').checked=!!g.on;$('sp-cols').value=g.cols;$('sp-ft').value=g.ft;
+ }
+ const s=$('sp-caster'),names=tokens().map(t=>t.p.name),k=names.join('|');
+ if(s.dataset.k!==k){
+  const old=s.value;s.innerHTML='';
+  names.forEach(n=>s.add(new Option(n,n)));
+  if(names.includes(old))s.value=old;
+  s.dataset.k=k;
+ }
+}
+
+/* --- hook sulle funzioni esistenti --- */
+const _apply=window.applyCurrentMapView;
+window.applyCurrentMapView=function(){
+ _apply.apply(this,arguments);
+ const v=getMyViewMapId();
+ if(v!==lastMap){lastMap=v;target=null;last=null;$('sp-results').innerHTML='';}
+ sync();redraw();
+ if(last&&panelOpen())calc();
+};
+const _tok=window.renderMapTokens;
+window.renderMapTokens=function(){_tok.apply(this,arguments);sync();};
+const _open=window.openMapLightbox;
+window.openMapLightbox=function(){_open.apply(this,arguments);setTimeout(redraw,220);};
+window.switchMasterTool=function(t){
+ ['token','fog','options','grid'].forEach(x=>{
+  $('tool-group-'+x).classList.toggle('hidden',x!==t);
+  $('tab-tool-'+x).classList.toggle('active',x===t);
+ });
+ if(t!=='grid'&&mode){mode=null;$('btn-sp-aim').classList.remove('active-tool');$('btn-sp-wall').classList.remove('active-tool');}
+ redraw();
+};
+img.addEventListener('load',()=>setTimeout(redraw,50));
+window.addEventListener('resize',redraw);
+})();
+</script>
+<!-- ===== FINE ADD-ON ===== -->
 </body>
 </html>

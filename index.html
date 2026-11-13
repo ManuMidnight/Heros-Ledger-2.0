@@ -2590,7 +2590,7 @@
             });
         }
     </script>
-<!-- ===== ADD-ON GRIGLIA + INCANTESIMI v3 (metri) =====
+<!-- ===== ADD-ON GRIGLIA + INCANTESIMI v4 (metri) =====
      Cancella il vecchio blocco (da "ADD-ON GRIGLIA" a "FINE ADD-ON") e incolla questo prima di </body>. -->
 <style>
 #grid-canvas,#spell-canvas{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
@@ -2601,11 +2601,15 @@
 .sp-b{background:#444;color:#fff;border:1px solid var(--gold);border-radius:4px;width:30px;height:30px;font-size:1rem;cursor:pointer}
 .sp-step{color:#fff;background:rgba(255,255,255,.1);border-radius:10px;padding:1px 8px;font-size:.65rem}
 .sp-v{color:#fff;min-width:28px;display:inline-block}
-#sp-card{position:absolute;top:6px;left:6px;right:6px;max-height:36%;overflow-y:auto;touch-action:pan-y;display:none;z-index:30;
- background:rgba(20,12,8,.93);border:1px solid var(--gold);border-radius:8px;padding:8px 26px 8px 10px;font-size:.8rem;color:#fff;text-align:left}
-#sp-x{position:absolute;top:4px;right:8px;cursor:pointer;color:#ff8a80}
-#sp-toast{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:var(--amber);color:#000;font-weight:bold;
+#sp-card{position:absolute;bottom:6px;left:6px;right:6px;max-height:30%;overflow-y:auto;touch-action:pan-y;display:none;z-index:30;
+ background:rgba(20,12,8,.93);border:1px solid var(--gold);border-radius:8px;padding:8px 56px 8px 10px;font-size:.8rem;color:#fff;text-align:left}
+#sp-card.top{bottom:auto;top:calc(6px + env(safe-area-inset-top,0px))}
+#sp-x,#sp-pos{position:absolute;top:4px;cursor:pointer;font-size:1rem}
+#sp-x{right:10px;color:#ff8a80}#sp-pos{right:34px;color:var(--amber)}
+#sp-toast{position:absolute;top:calc(10px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);background:var(--amber);color:#000;font-weight:bold;
  padding:6px 12px;border-radius:14px;font-size:.8rem;z-index:40;display:none;pointer-events:none;white-space:nowrap}
+#sp-clear{position:absolute;top:calc(8px + env(safe-area-inset-top,0px));right:8px;z-index:35;display:none;background:#b71c1c;color:#fff;
+ border:1px solid #fff;border-radius:14px;padding:6px 10px;font-size:.75rem;font-weight:bold;cursor:pointer}
 .sp-ok{color:#69f0ae}.sp-no{color:#ff8a80}.sp-cov{color:#ffd54f}
 </style>
 
@@ -2613,8 +2617,8 @@
 (function(){
 const $=id=>document.getElementById(id);
 const wrapper=$('map-wrapper'), img=$('zoomable-img'), zc=$('zoom-container');
-const W=()=>wrapper.offsetWidth, H=()=>wrapper.offsetHeight;   // stesso riferimento dei token (% del wrapper)
-const M_PER_SQ=1.5;                                            // 1 quadretto = 5 piedi = 1,5 m
+const W=()=>wrapper.offsetWidth, H=()=>wrapper.offsetHeight;
+const M_PER_SQ=1.5;                                   // 1 quadretto = 5 piedi = 1,5 m
 const fm=x=>String(Math.round(x*10)/10).replace('.',',');
 const GC=document.createElement('canvas');GC.id='grid-canvas';
 const SC=document.createElement('canvas');SC.id='spell-canvas';
@@ -2657,6 +2661,8 @@ document.querySelector('.map-controls-grid').insertAdjacentHTML('beforeend',`
  <div class="sp-row"><span class="sp-step">3</span>
   <button id="btn-sp-aim" class="btn-taverna" style="padding:8px 16px;font-size:.9rem" onclick="spMode('aim')">🎯 Mira</button>
   <button id="btn-sp-wall" class="btn-taverna" style="padding:8px 10px" onclick="spMode('wall')">🧱 Coperture</button>
+  <button class="btn-taverna" style="padding:8px 10px;background:#b71c1c;color:#fff" onclick="spClear()">🧹 Cancella area</button>
+  <label style="color:#fff"><input type="checkbox" id="sp-share" checked onchange="spShare()"> 👁️ Visibile ai giocatori</label>
  </div>
  <div id="sp-wallrow" class="sp-row hidden">
   <select id="sp-cover"><option value="2">Mezza (+2)</option><option value="5">Tre quarti (+5)</option><option value="99">Totale</option></select>
@@ -2664,11 +2670,13 @@ document.querySelector('.map-controls-grid').insertAdjacentHTML('beforeend',`
   <button class="sp-b" title="Cancella tutte" style="background:#b71c1c" onclick="spClearWalls()">🗑️</button>
  </div>
 </div>`);
-zc.insertAdjacentHTML('beforeend','<div id="sp-card"><span id="sp-x" onclick="this.parentNode.style.display=\'none\'">✕</span><div id="sp-res"></div></div><div id="sp-toast"></div>');
-['mousedown','touchstart','touchmove'].forEach(ev=>$('sp-card').addEventListener(ev,e=>e.stopPropagation(),{passive:true}));
+zc.insertAdjacentHTML('beforeend',`<div id="sp-card"><span id="sp-pos" title="Sposta in alto/basso" onclick="$card.classList.toggle('top')">⇅</span><span id="sp-x" onclick="$card.style.display='none'">✕</span><div id="sp-res"></div></div>
+<div id="sp-toast"></div><button id="sp-clear" onclick="spClear()">🧹 Cancella area</button>`);
+window.$card=$('sp-card');
+['mousedown','touchstart','touchmove'].forEach(ev=>{$('sp-card').addEventListener(ev,e=>e.stopPropagation(),{passive:true});$('sp-clear').addEventListener(ev,e=>e.stopPropagation(),{passive:true});});
 
 /* ---------- stato ---------- */
-let mode=null,target=null,wallStart=null,wallEnd=null,lastMap=null,last=null,down=false,tt;
+let mode=null,target=null,wallStart=null,wallEnd=null,lastMap=null,last=null,down=false,tt,remote=null,pubT=0,pubTimer;
 const vid=()=>getMyViewMapId();
 const cfg=()=>Object.assign({on:false,cols:30,col:'both',op:80,ox:0,oy:0},(mapDataCache[vid()]||{}).grid||{});
 const panelOpen=()=>me.role==='master'&&!$('tool-group-grid').classList.contains('hidden');
@@ -2691,6 +2699,31 @@ function problems(){
  return p;
 }
 
+/* ---------- condivisione incantesimo ---------- */
+function publish(force){
+ if(me.role!=='master'||!last)return;
+ const send=()=>{
+  const r=campaignRef.child('spell');
+  if(!$('sp-share').checked){r.remove();return;}
+  const w=W(),h=H();
+  r.set({on:true,mapId:vid(),shape:last.shape,size:last.size,width:last.lw,cols:cfg().cols,
+   cx:+(last.C.x/w*100).toFixed(2),cy:+(last.C.y/h*100).toFixed(2),px:+(last.P.x/w*100).toFixed(2),py:+(last.P.y/h*100).toFixed(2)});
+ };
+ clearTimeout(pubTimer);
+ if(force||Date.now()-pubT>120){pubT=Date.now();send();}else pubTimer=setTimeout(()=>{pubT=Date.now();send();},120);
+}
+function geomRemote(s){
+ const w=W(),h=H(),cell=w/s.cols,pxM=cell/M_PER_SQ;
+ const C={x:s.cx/100*w,y:s.cy/100*h},P={x:s.px/100*w,y:s.py/100*h},len=Math.hypot(P.x-C.x,P.y-C.y)||1;
+ return {shape:s.shape,C,P,L:s.size*pxM,d:{x:(P.x-C.x)/len,y:(P.y-C.y)/len},lw:s.width,range:0,pxM,cell};
+}
+window.spClear=function(){
+ last=null;target=null;clearTimeout(pubTimer);
+ if(me.role==='master')campaignRef.child('spell').remove();
+ drawSpell();if(panelOpen())card('🧹 Area cancellata. Premi 🎯 Mira e tocca la mappa per un nuovo incantesimo.');
+};
+window.spShare=function(){if(!$('sp-share').checked&&me.role==='master')campaignRef.child('spell').remove();else publish(true);toast($('sp-share').checked?'Visibile ai giocatori 👁️':'Nascosto ai giocatori');};
+
 /* ---------- disegno ---------- */
 function drawGrid(){
  const g=cfg(),w=W(),h=H();
@@ -2707,11 +2740,14 @@ function drawSpell(){
  const w=W(),h=H();
  SC.width=w;SC.height=h;
  const c=SC.getContext('2d');c.clearRect(0,0,w,h);
- if(!panelOpen())return;
- walls().forEach(o=>seg(c,o.x1,o.y1,o.x2,o.y2,o.t));
- if(wallStart&&wallEnd)seg(c,wallStart.x,wallStart.y,wallEnd.x,wallEnd.y,+$('sp-cover').value);
- if(!last)return;
- const {shape,C,P,L,d,lw,range,pxM,cell}=last,n={x:-d.y,y:d.x};
+ if(panelOpen()){
+  walls().forEach(o=>seg(c,o.x1,o.y1,o.x2,o.y2,o.t));
+  if(wallStart&&wallEnd)seg(c,wallStart.x,wallStart.y,wallEnd.x,wallEnd.y,+$('sp-cover').value);
+ }
+ const geo=last||(remote&&remote.on&&remote.mapId===vid()?geomRemote(remote):null);
+ $('sp-clear').style.display=(me.role==='master'&&geo)?'block':'none';
+ if(!geo)return;
+ const {shape,C,P,L,d,lw,range,pxM,cell}=geo,n={x:-d.y,y:d.x};
  c.fillStyle='rgba(255,60,60,.3)';c.strokeStyle='#ff5252';c.lineWidth=2;
  if(range&&shape!=='cone'&&shape!=='line'){c.save();c.setLineDash([6,4]);c.strokeStyle='#40c4ff';const r=range*pxM;c.strokeRect(C.x-r,C.y-r,2*r,2*r);c.restore();}
  c.beginPath();
@@ -2736,13 +2772,13 @@ function calc(){
  const T=tokens(),cn=$('sp-caster').value,Ct=T.find(t=>t.p.name===cn);
  if(!Ct){card('⚠️ Scegli il lanciatore (menu al punto 2): deve essere un token in mappa.');last=null;drawSpell();return;}
  if(!target){card('🎯 Tocca (o trascina) sulla mappa per mirare.');drawSpell();return;}
- const g=cfg(),cell=W()/g.cols,pxM=cell/M_PER_SQ;      // la dimensione del quadretto cambia, 1 quadretto = 1,5 m sempre
+ const g=cfg(),cell=W()/g.cols,pxM=cell/M_PER_SQ;
  const shape=$('sp-shape').value,range=+$('sp-range').value||0,size=+$('sp-size').value||0,lw=+$('sp-width').value||M_PER_SQ;
  const C={x:Ct.x,y:Ct.y},P=target,L=size*pxM;
  const len=Math.hypot(P.x-C.x,P.y-C.y)||1,d={x:(P.x-C.x)/len,y:(P.y-C.y)/len};
  const dist=(a,b)=>Math.round(Math.max(Math.abs(a.x-b.x),Math.abs(a.y-b.y))/cell)*M_PER_SQ;
  const O=(shape==='sphere'||shape==='cube')?P:C;
- last={shape,C,P,L,d,lw,range,pxM,cell};
+ last={shape,C,P,L,d,lw,range,pxM,cell,size};
  const inArea=t=>{
   const v={x:t.x-O.x,y:t.y-O.y};
   if(shape==='single')return Math.hypot(t.x-P.x,t.y-P.y)<=cell*.75;
@@ -2772,7 +2808,7 @@ function calc(){
   const c=cover(t),ac=(+t.p.ac||0)+(+t.p.tempAc||0),cls=c>=99?'sp-no':c>0?'sp-cov':'sp-ok';
   html+=`<div class="${cls}">• <b>${t.p.name}</b> — ${fm(dist(C,t))} m — copertura: ${covLabel(c)}${c>=99?'':` — CA ${ac}${c?'→'+(ac+c):''}`}</div>`;
  });
- card(html);drawSpell();
+ card(html);drawSpell();publish();
 }
 
 /* ---------- interazione mappa ---------- */
@@ -2781,7 +2817,7 @@ function pt(e){
  return {x:(t.clientX-r.left)/r.width*W(),y:(t.clientY-r.top)/r.height*H()};
 }
 function st(e){
- if(!mode||me.role!=='master'||e.target.closest('#sp-card'))return;
+ if(!mode||me.role!=='master'||e.target.closest('#sp-card,#sp-clear'))return;
  e.preventDefault();e.stopImmediatePropagation();down=true;
  const p=pt(e);
  if(mode==='aim'){target=p;calc();}else{wallStart=p;wallEnd=p;}
@@ -2789,6 +2825,7 @@ function st(e){
 function mv(e){if(!down)return;e.preventDefault();const p=pt(e);if(mode==='aim'){target=p;calc();}else{wallEnd=p;drawSpell();}}
 function en(){
  if(!down)return;down=false;
+ if(mode==='aim')publish(true);
  if(mode==='wall'&&wallStart&&wallEnd){
   const w=W(),h=H(),cell=w/cfg().cols;
   if(Math.hypot(wallEnd.x-wallStart.x,wallEnd.y-wallStart.y)>cell*.3){
@@ -2808,7 +2845,6 @@ zc.addEventListener('touchend',en);
 
 /* ---------- pannello ---------- */
 function labels(){$('sp-colsv').textContent=$('sp-cols').value;$('sp-opv').textContent=$('sp-op').value+'%';}
-// live=1: solo anteprima mentre trascini; altrimenti salva su Firebase
 window.spGrid=function(live){
  const g={on:$('sp-on').checked,cols:+$('sp-cols').value||30,col:$('sp-col').value,op:+$('sp-op').value||80,ox:+$('sp-ox').value||0,oy:+$('sp-oy').value||0};
  const v=masterActiveMap;(mapDataCache[v]=mapDataCache[v]||{}).grid=g;
@@ -2855,6 +2891,11 @@ function sync(){
 }
 
 /* ---------- hook ---------- */
+const _setup=window.setupSync;
+window.setupSync=function(){
+ _setup.apply(this,arguments);
+ campaignRef.child('spell').on('value',s=>{remote=s.val();drawSpell();});
+};
 const _apply=window.applyCurrentMapView;
 window.applyCurrentMapView=function(){
  _apply.apply(this,arguments);

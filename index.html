@@ -2919,5 +2919,43 @@ window.addEventListener('resize',redraw);
 })();
 </script>
 <!-- ===== FINE ADD-ON ===== -->
+    <!-- ===== SKIN: NUOVA GRAFICA (solo aspetto, nessuna funzione cambiata) =====
+     Incolla questo blocco DOPO l'add-on griglia v4 e PRIMA di </body>. Per tornare indietro basta cancellarlo. -->
+<style>
+:root{--wood:#2a1c16;--stone:#3a2d27;--amber:#ffd166;--gold:#c99a2e;--parchment:#f3e3c3}
+*{scrollbar-width:thin;scrollbar-color:#7a5c1e transparent}
+body{background:radial-gradient(120% 80% at 50% 0%,#3b2a22 0%,#1c1310 70%)!important}
+h2,h3{letter-spacing:.06em;font-variant:small-caps}
+
+/* campi e pulsanti */
+input,select{background:#2a211d;border:1px solid #6b5a4c;border-radius:10px;transition:border-color .15s,box-shadow .15s}
+input:focus,select:focus{outline:none;border-color:var(--amber);box-shadow:0 0 0 3px rgba(255,209,102,.22)}
+.btn-taverna{border-radius:10px;box-shadow:0 2px 0 rgba(0,0,0,.4);transition:transform .08s,filter .15s;
+ background-image:linear-gradient(180deg,rgba(255,255,255,.22),rgba(0,0,0,.12))!important}
+.btn-taverna:active{transform:translateY(1px);box-shadow:none;filter:brightness(.92)}
+
+/* login */
+.login-overlay{background:radial-gradient(100% 70% at 50% 20%,#3b2a22,#0e0907)!important}
+.scroll-box{background:linear-gradient(170deg,#2c2019,#1a1210);border:1px solid var(--gold);border-radius:20px;box-shadow:0 10px 40px rgba(0,0,0,.6),0 0 0 4px rgba(201,154,46,.12)}
+.vault-card img{box-shadow:0 0 8px rgba(201,154,46,.5)}
+
+/* header e barra master */
+header{background:linear-gradient(180deg,#4b3b32,#2d221d);border-bottom:1px solid var(--gold);box-shadow:0 3px 12px rgba(0,0,0,.5);font-size:.9rem}
+header strong{letter-spacing:.14em}
+.exit-btn{border-radius:999px;padding:5px 12px}
+#master-panel{background:linear-gradient(#2c1f19,#211713)!important;padding:8px 10px!important;gap:8px!important;border-bottom:1px solid rgba(201,154,46,.35)}
+#master-panel .btn-taverna{font-size:.78rem;padding:8px 11px}
+#master-panel>div{border-radius:12px!important;border-color:rgba(201,154,46,.5)!important}
+
+/* gruppo / iniziativa / mappa fissata */
+#party-bar{background:rgba(0,0,0,.35);gap:12px;padding:10px 12px}
+.pg-tag:not(.npc-tag):not(.dead-tag){background:linear-gradient(160deg,#f8ebcd,#e6d0a1)}
+.pg-tag{border-radius:14px;box-shadow:0 3px 10px rgba(0,0,0,.45);border-width:1px}
+.avatar-circle{border:2px solid rgba(0,0,0,.25)}
+#initiative-tracker{background:linear-gradient(90deg,#7f1717,#b71c1c)}
+.init-token{background:#1a1210;border-radius:999px}
+#pinned-map-container{margin:8px 10px;border-radius:14px;border:1px solid rgba(201,154,46,.5);background:linear-gradient(#1a1210,#120c0a)}
+.btn-open-map{border:1px solid #fff3b0;border-radius:14px;padding:13px;letter-spacing:.05em}
+    
 </body>
 </html>

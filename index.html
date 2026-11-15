@@ -73,7 +73,7 @@
             transform: scale(1.2);
             cursor: pointer;
         }
-        #multi-selector {
+        #multi-selector, #player-multi-selector {
             background: #5d4037;
             padding: 10px;
             border: 2px solid var(--gold);
@@ -592,6 +592,7 @@
             z-index: 10;
         }
         .map-token {
+            box-sizing: border-box;   /* il bordo non deve allargare il token: sposterebbe il centro di qualche pixel */
             width: 100%;
             height: auto;
             aspect-ratio: 1/1;
@@ -605,6 +606,11 @@
             background: #222;
         }
         .token-name-plate {
+            /* fuori dal flusso: non deve spostare il centro del token (era la causa del token "decentrato" sullo smartphone) */
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
             background: rgba(0,0,0,0.8);
             border: 1px solid var(--amber);
             color: white;
@@ -620,7 +626,8 @@
             text-shadow: 1px 1px 0px black;
         }
         .token-wrapper:active .token-name-plate, 
-        .token-wrapper.active-drag .token-name-plate {
+        .token-wrapper.active-drag .token-name-plate,
+        .token-wrapper.npc-token .token-name-plate {   /* PNG / BOSS: nome sempre visibile */
             opacity: 1;
         }
         .ping-indicator {
@@ -847,9 +854,12 @@
                 <div id="multi-selector"></div>
             </div>
             <div id="player-whisper-ui" class="hidden">
-                <select id="player-msg-recipient" style="color:var(--amber); font-size:0.8rem; width:100%; margin-bottom:5px;">
+                <select id="player-msg-recipient" onchange="updatePlayerWhisperUI(this.value)" style="color:var(--amber); font-size:0.8rem; width:100%; margin-bottom:5px;">
                     <option value="ALL">A: TUTTI</option>
+                    <option value="MASTER">Sussurra al MASTER</option>
+                    <option value="MULTI">SUSSURRO MULTIPLO</option>
                 </select>
+                <div id="player-multi-selector"></div>
             </div>
             <select id="current-lang" class="lang-select"></select>
             <form onsubmit="sendMsg(); return false;" style="display:flex; gap:5px; width:100%; align-items: center; padding: 5px;">
@@ -1372,13 +1382,19 @@
                 const sel = document.getElementById('msg-recipient');
                 const pSel = document.getElementById('player-msg-recipient');
                 const multi = document.getElementById('multi-selector');
+                const pMulti = document.getElementById('player-multi-selector');
+                // le liste vengono ricostruite a ogni aggiornamento dei giocatori: ricordo cosa era selezionato
+                const prevRec = sel ? sel.value : 'ALL';
+                const prevPRec = pSel ? pSel.value : 'ALL';
+                const prevChecked = new Set(Array.from(document.querySelectorAll('.whisper-check:checked')).map(c => c.value));
                 const senderChoice = document.getElementById('sender-choice');
                 const currentChoice = senderChoice ? senderChoice.value : "MASTER";
                 
                 if(senderChoice) senderChoice.innerHTML = '<option value="MASTER">Parla come: MASTER</option>';
                 if(sel) sel.innerHTML = '<option value="ALL">Destinatario: TUTTI</option><option value="MULTI">SUSSURRO MULTIPLO</option>';
-                if(pSel) pSel.innerHTML = '<option value="ALL">A: TUTTI</option>';
+                if(pSel) pSel.innerHTML = '<option value="ALL">A: TUTTI</option><option value="MASTER">Sussurra al MASTER</option><option value="MULTI">SUSSURRO MULTIPLO</option>';
                 if(multi) multi.innerHTML = "";
+                if(pMulti) pMulti.innerHTML = "";
                 
                 const mapTokenSelect = document.getElementById('map-token-select');
                 if(mapTokenSelect) {
@@ -1420,6 +1436,7 @@
                         }
                         if(me.role === 'player' && p.type === 'PC') {
                             pSel.innerHTML += `<option value="${p.name}">Sussurra a: ${p.name}</option>`;
+                            if(pMulti) pMulti.innerHTML += `<div class="check-item"><input type="checkbox" class="whisper-check" value="${p.name}"> <span>${p.name}</span></div>`;
                         }
                     }
                     
@@ -1447,6 +1464,12 @@
                 });
                 
                 if(senderChoice) senderChoice.value = currentChoice;
+                // ripristino destinatario e spunte (se il destinatario esiste ancora)
+                if(sel && Array.from(sel.options).some(o => o.value === prevRec)) sel.value = prevRec;
+                if(pSel && Array.from(pSel.options).some(o => o.value === prevPRec)) pSel.value = prevPRec;
+                document.querySelectorAll('.whisper-check').forEach(c => { c.checked = prevChecked.has(c.value); });
+                if(sel) updateWhisperUI(sel.value);
+                if(pSel) updatePlayerWhisperUI(pSel.value);
                 oldNPCs = ps;
                 cachedNPCs = ps;
                 renderMapTokens();
@@ -1492,7 +1515,8 @@
                     d.id = "msg-" + k;
                     d.dataset.time = m.time;
                     
-                    const tag = m.to !== 'ALL' && !m.isRound ? `<span style="color:#9c27b0;font-size:0.7rem;"> [sussurro]</span>` : '';
+                    const whisperTo = Array.isArray(m.to) ? m.to.join(', ') : (m.to === 'MASTER' ? 'Master' : m.to);
+                    const tag = m.to !== 'ALL' && !m.isRound ? `<span style="color:#9c27b0;font-size:0.7rem;"> [sussurro → ${whisperTo}]</span>` : '';
                     const lTag = m.lang !== "Comune" ? `<span style="color:var(--gold);font-size:0.7rem;"> [${m.lang}]</span>` : '';
                     const tStr = new Date(m.time).getHours().toString().padStart(2,'0') + ":" + new Date(m.time).getMinutes().toString().padStart(2,'0');
                     
@@ -2002,6 +2026,7 @@
                     }
                     
                     wrap.style.width = tSize + "%";
+                    wrap.classList.toggle('npc-token', p.type !== 'PC');
                     
                     let label = wrap.querySelector('.token-name-plate');
                     if (label) {
@@ -2280,12 +2305,19 @@
                 }
                 const rec = document.getElementById('msg-recipient').value;
                 if(rec === 'MULTI') {
-                    to = Array.from(document.querySelectorAll('.whisper-check:checked')).map(c=>c.value);
+                    to = Array.from(document.querySelectorAll('#multi-selector .whisper-check:checked')).map(c=>c.value);
+                    if(to.length === 0) return alert("Seleziona almeno un destinatario per il sussurro multiplo.");
                 } else {
                     to = rec;
                 }
             } else {
-                to = document.getElementById('player-msg-recipient').value;
+                const prec = document.getElementById('player-msg-recipient').value;
+                if(prec === 'MULTI') {
+                    to = Array.from(document.querySelectorAll('#player-multi-selector .whisper-check:checked')).map(c=>c.value);
+                    if(to.length === 0) return alert("Seleziona almeno un destinatario per il sussurro multiplo.");
+                } else {
+                    to = prec;   // 'ALL', 'MASTER' oppure il nome di un giocatore
+                }
             }
             
             campaignRef.child('messages').push({
@@ -2434,6 +2466,11 @@
 
         function updateWhisperUI(val) {
             document.getElementById('multi-selector').style.display = val === 'MULTI' ? 'block' : 'none';
+        }
+
+        function updatePlayerWhisperUI(val) {
+            const box = document.getElementById('player-multi-selector');
+            if(box) box.style.display = val === 'MULTI' ? 'block' : 'none';
         }
 
         function clearChat() {
@@ -3062,7 +3099,7 @@ header{
 #master-only-ui select{flex:1 1 45%;margin:0!important;font-size:.85rem;border-radius:999px;padding:7px 10px}
 #sender-choice{color:var(--gold-hi)!important;font-family:var(--f-title);background:#140e0b!important}
 #msg-recipient,#player-msg-recipient{color:var(--parchment)!important;background:#140e0b!important}
-#multi-selector{flex-basis:100%;background:#1a120e;border:1px solid var(--line);border-radius:12px}
+#multi-selector,#player-multi-selector{flex-basis:100%;background:#1a120e;border:1px solid var(--line);border-radius:12px}
 #player-msg-recipient{border-radius:999px;margin-bottom:6px!important}
 .lang-select{width:auto;font-family:var(--f-title);background:#140e0b;border:1px solid var(--line);border-radius:999px;padding:4px 10px;margin:6px 0 0}
 .input-area form{padding:6px 0 0!important;gap:6px!important}

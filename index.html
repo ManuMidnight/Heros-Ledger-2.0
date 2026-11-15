@@ -1986,6 +1986,7 @@
                         
                         if(me.role === 'master' || p.name === me.name) {
                             let isDraggingToken = false;
+                            let lastDragPos = null;
                             const tokenStart = (e) => {
                                 if(currentFogTool) return;
                                 e.preventDefault();
@@ -2004,6 +2005,7 @@
                                 let newY = Math.max(0, Math.min(100, ((clientY - rect.top) / rect.height) * 100));
                                 wrap.style.left = newX + "%";
                                 wrap.style.top = newY + "%";
+                                lastDragPos = {x: newX, y: newY};
                                 let updates = {};
                                 updates[`${vId}_x`] = newX.toFixed(2);
                                 updates[`${vId}_y`] = newY.toFixed(2);
@@ -2014,6 +2016,25 @@
                                 e.stopPropagation();
                                 isDraggingToken = false;
                                 wrap.classList.remove('active-drag');
+                                // con la griglia attiva il token si aggancia al centro del quadretto piu' vicino
+                                const g = (mapDataCache[vId] || {}).grid;
+                                if (lastDragPos && g && g.on && g.cols > 0) {
+                                    const mw = document.getElementById('map-wrapper');
+                                    const W = mw.offsetWidth, H = mw.offsetHeight;
+                                    if (W > 0 && H > 0) {
+                                        const cell = W / g.cols, ox = (g.ox || 0) / 100 * cell, oy = (g.oy || 0) / 100 * cell;
+                                        const cx = ox + (Math.round((lastDragPos.x / 100 * W - ox) / cell - 0.5) + 0.5) * cell;
+                                        const cy = oy + (Math.round((lastDragPos.y / 100 * H - oy) / cell - 0.5) + 0.5) * cell;
+                                        const sx = Math.max(0, Math.min(100, cx / W * 100)), sy = Math.max(0, Math.min(100, cy / H * 100));
+                                        wrap.style.left = sx + "%";
+                                        wrap.style.top = sy + "%";
+                                        let up = {};
+                                        up[`${vId}_x`] = sx.toFixed(2);
+                                        up[`${vId}_y`] = sy.toFixed(2);
+                                        campaignRef.child('players').child(p.name).update(up);
+                                    }
+                                }
+                                lastDragPos = null;
                             };
                             
                             wrap.addEventListener('mousedown', tokenStart);

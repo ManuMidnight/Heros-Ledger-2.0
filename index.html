@@ -630,20 +630,27 @@
         .token-wrapper.npc-token .token-name-plate {   /* PNG / BOSS: nome sempre visibile */
             opacity: 1;
         }
-        /* nome dei PNG: compatto, appoggiato al bordo basso del token */
+        /* nome dei PNG: piccolo e sobrio, appoggiato al bordo basso del token */
         .token-wrapper.npc-token .token-name-plate {
             bottom: auto;
             top: 100%;
-            margin: -6px 0 0 0;
-            font-size: 0.55rem;
-            line-height: 1.25;
-            letter-spacing: 0;
-            padding: 0 4px;
-            border-radius: 3px;
-            background: rgba(0,0,0,0.72);
-            border-width: 1px;
+            margin: -3px 0 0 0;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            font-size: 0.45rem;
+            font-weight: 600;
+            line-height: 1.3;
+            letter-spacing: 0.02em;
+            text-shadow: none;
+            padding: 0 3px;
+            border: 0;
+            border-radius: 2px;
+            color: rgba(255,255,255,0.92);
+            background: rgba(0,0,0,0.55);
+            max-width: 90px;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
-        /* contapassi */
+        /* metri percorsi */
         .token-steps {
             position: absolute;
             top: -7px;
@@ -667,7 +674,7 @@
             border: 1px solid var(--gold); background: #222; color: #fff;
             font-size: 1rem; line-height: 1; padding: 0; cursor: pointer;
         }
-        #steps-value { min-width: 22px; text-align: center; color: #fff; font-size: 0.9rem; }
+        #meters-value { min-width: 22px; text-align: center; color: #fff; font-size: 0.9rem; }
         .ping-indicator {
             position: absolute;
             width: 24px;
@@ -1043,12 +1050,13 @@
                             </div>
                         </div>
                         <div class="compact-controls" style="margin-top:6px;">
-                            <div class="slider-group">👣 Passi:
-                                <button class="steps-btn" onclick="adjustSelectedSteps(-1)" title="-1 passo">−</button>
-                                <b id="steps-value">–</b>
-                                <button class="steps-btn" onclick="adjustSelectedSteps(1)" title="+1 passo">+</button>
+                            <div class="slider-group">👣 Percorso:
+                                <button class="steps-btn" onclick="adjustSelectedMeters(-1.5)" title="-1,5 m">−</button>
+                                <b id="meters-value">–</b>
+                                <button class="steps-btn" onclick="adjustSelectedMeters(1.5)" title="+1,5 m">+</button>
                             </div>
-                            <button onclick="resetAllSteps()" class="btn-taverna" style="padding:6px 10px;" title="Azzera i passi di tutti i token (nuovo turno)">🔄 Azzera tutti</button>
+                            <button onclick="resetAllMeters()" class="btn-taverna" style="padding:6px 10px;" title="Azzera i metri di tutti i token (nuovo turno)">🔄 Azzera metri</button>
+                            <button onclick="clearAllTrails()" class="btn-taverna" style="padding:6px 10px;" title="Cancella le linee tratteggiate dei percorsi">🧹 Cancella traiettorie</button>
                         </div>
                     </div>
                     <div id="tool-group-fog" class="map-control-group hidden">
@@ -1505,7 +1513,7 @@
                     
                     let stats = `<br><small style="color:green; ${me.role==='master'?'cursor:pointer':''}" onclick="openManagePG('${p.name}')">${p.info||''} | ${p.hp}${tHpHtml}/${p.hpMax}PF | CA:${p.ac}${tAcHtml}</small>`;
                     if(p.init > 0) stats += ` <small style="color:red;">Init:${p.init}</small>`;
-                    if(p.steps > 0) stats += ` <small style="color:#64b5f6;">👣${p.steps}</small>`;
+                    if(p.meters > 0) stats += ` <small style="color:#64b5f6;">👣${fmM(p.meters)} m</small>`;
                     
                     bar.innerHTML += `<div class="pg-tag ${extraClass}">${(me.role==='master')?`<button onclick="campaignRef.child('players').child('${p.name}').remove()" style="position:absolute;top:-5px;right:-5px;background:red;color:white;border-radius:50%;border:none;width:18px;cursor:pointer;z-index:20;">×</button>`:''}<div class="avatar-container"><img src="${p.photo||'https://cdn-icons-png.flaticon.com/512/149/149071.png'}" class="avatar-circle"><div class="hp-overlay" style="background: rgba(255,0,0,${(1-ratio)*0.6})"></div></div><div><strong>${p.hp<=0?'💀':''}${p.isSecret?'👻':''}${p.name}</strong>${(p.type==='PC'||me.role==='master')?stats:`<br><small style="color:green">${p.info||''}</small>`}<br>${condHtml}</div></div>`;
                 });
@@ -1961,6 +1969,7 @@
             let updates = {};
             updates[`${masterActiveMap}_x`] = 50;
             updates[`${masterActiveMap}_y`] = 50;
+            updates[`${masterActiveMap}_trail`] = null;
             campaignRef.child('players').child(name).update(updates);
         }
 
@@ -1970,6 +1979,7 @@
             let updates = {};
             updates[`${masterActiveMap}_x`] = -1;
             updates[`${masterActiveMap}_y`] = -1;
+            updates[`${masterActiveMap}_trail`] = null;
             campaignRef.child('players').child(name).update(updates);
         }
 
@@ -1981,45 +1991,101 @@
             alert(currentState ? `${name} è ora VISIBILE a tutti.` : `${name} è ora uno SPETTRO invisibile.`);
         }
 
-        // ---- PASSI (1 passo = 1 quadretto, diagonali comprese; serve la griglia attiva sulla mappa) ----
+        // ---- METRI PERCORSI (1 quadretto = 1,5 m, diagonali comprese; serve la griglia attiva) + TRAIETTORIE ----
+        const M_PER_CELL = 1.5;
+        const fmM = x => String(Math.round(x * 10) / 10).replace('.', ',');
         function stepGrid(vId) {
             const g = (mapDataCache[vId] || {}).grid;
             return (g && g.on && g.cols > 0) ? g : null;
         }
-        function stepsBetween(vId, a, b) {
+        function metersBetween(vId, a, b) {
             const g = stepGrid(vId), mw = document.getElementById('map-wrapper');
             if (!g || !a || !b || !mw || !mw.offsetWidth) return 0;
             const cell = mw.offsetWidth / g.cols;
             const dx = (b.x - a.x) / 100 * mw.offsetWidth / cell;
             const dy = (b.y - a.y) / 100 * mw.offsetHeight / cell;
-            return Math.round(Math.max(Math.abs(dx), Math.abs(dy)));
+            return Math.round(Math.max(Math.abs(dx), Math.abs(dy))) * M_PER_CELL;
         }
-        function setTokenSteps(name, val) {
+        function setTokenMeters(name, val) {
             if (me.role !== 'master' || !cachedNPCs[name]) return;
-            val = Math.max(0, Math.round(Number(val)) || 0);
-            campaignRef.child('players').child(name).update({ steps: val });
+            val = Math.max(0, Math.round((Number(val) || 0) * 10) / 10);
+            campaignRef.child('players').child(name).update({ meters: val });
         }
-        function adjustSelectedSteps(delta) {
+        function adjustSelectedMeters(delta) {
             const name = document.getElementById('map-token-select').value;
             if (!name || !cachedNPCs[name]) return alert("Scegli prima un PG!");
-            setTokenSteps(name, (cachedNPCs[name].steps || 0) + delta);
+            setTokenMeters(name, (cachedNPCs[name].meters || 0) + delta);
         }
-        function editTokenSteps(name) {
+        function editTokenMeters(name) {
             if (me.role !== 'master' || !cachedNPCs[name]) return;
-            const v = prompt(`Passi fatti da ${name}:`, cachedNPCs[name].steps || 0);
-            if (v !== null) setTokenSteps(name, v);
+            const v = prompt(`Metri percorsi da ${name}:`, fmM(cachedNPCs[name].meters || 0));
+            if (v !== null) setTokenMeters(name, String(v).replace(',', '.'));
         }
-        function resetAllSteps() {
-            if (!confirm("Azzerare i passi di tutti i token?")) return;
+        function resetAllMeters() {
+            if (!confirm("Azzerare i metri percorsi di tutti i token?")) return;
             Object.values(cachedNPCs).forEach(p => {
-                if (p.steps) campaignRef.child('players').child(p.name).update({ steps: 0 });
+                if (p.meters) campaignRef.child('players').child(p.name).update({ meters: 0 });
             });
         }
         function loadStepsUI() {
-            const el = document.getElementById('steps-value'), sel = document.getElementById('map-token-select');
+            const el = document.getElementById('meters-value'), sel = document.getElementById('map-token-select');
             if (!el || !sel) return;
-            el.textContent = (sel.value && cachedNPCs[sel.value]) ? (cachedNPCs[sel.value].steps || 0) : '–';
+            el.textContent = (sel.value && cachedNPCs[sel.value]) ? fmM(cachedNPCs[sel.value].meters || 0) + ' m' : '–';
         }
+        // traiettorie: salvate come "x,y;x,y" (in % della mappa) in <mappa>_trail di ogni token
+        function parseTrail(str) {
+            return String(str || '').split(';').filter(Boolean).map(t => { const q = t.split(','); return { x: parseFloat(q[0]), y: parseFloat(q[1]) }; }).filter(q => isFinite(q.x) && isFinite(q.y));
+        }
+        function trailString(pts) {
+            return pts.map(q => q.x.toFixed(2) + ',' + q.y.toFixed(2)).join(';');
+        }
+        function clearAllTrails() {
+            if (me.role !== 'master') return;
+            if (!confirm("Cancellare le traiettorie di questa mappa?")) return;
+            Object.values(cachedNPCs).forEach(p => {
+                if (p[`${masterActiveMap}_trail`]) {
+                    let u = {}; u[`${masterActiveMap}_trail`] = null;
+                    campaignRef.child('players').child(p.name).update(u);
+                }
+            });
+        }
+        function drawTrails() {
+            const mw = document.getElementById('map-wrapper');
+            if (!mw) return;
+            let cv = document.getElementById('trail-canvas');
+            if (!cv) {
+                cv = document.createElement('canvas');
+                cv.id = 'trail-canvas';
+                cv.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;';
+                mw.insertBefore(cv, document.getElementById('token-layer'));
+            }
+            const w = mw.offsetWidth, h = mw.offsetHeight;
+            if (!w || !h) return;
+            if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+            const c = cv.getContext('2d');
+            c.clearRect(0, 0, w, h);
+            const vId = getMyViewMapId();
+            const lw = Math.max(1.5, w / 320);
+            Object.values(cachedNPCs).forEach(p => {
+                if (me.role !== 'master' && p.isSecret) return;
+                const px = parseFloat(p[`${vId}_x`]), py = parseFloat(p[`${vId}_y`]);
+                if (!(px >= 0 && py >= 0)) return;
+                const pts = parseTrail(p[`${vId}_trail`]);
+                if (!pts.length) return;
+                pts.push({ x: px, y: py });
+                const col = p.type === 'PC' ? '#4fc3f7' : (p.type === 'BOSS' ? '#ffca28' : '#ff7043');
+                const trace = () => { c.beginPath(); pts.forEach((q, i) => { const X = q.x / 100 * w, Y = q.y / 100 * h; if (i) c.lineTo(X, Y); else c.moveTo(X, Y); }); c.stroke(); };
+                c.lineCap = 'round'; c.lineJoin = 'round';
+                c.setLineDash([lw * 3, lw * 2.4]);
+                c.strokeStyle = 'rgba(0,0,0,0.6)'; c.lineWidth = lw + 1.6; trace();
+                c.strokeStyle = col; c.lineWidth = lw; trace();
+                c.setLineDash([]);
+                c.fillStyle = col; c.strokeStyle = 'rgba(0,0,0,0.7)'; c.lineWidth = 1;
+                c.beginPath(); c.arc(pts[0].x / 100 * w, pts[0].y / 100 * h, lw * 1.5, 0, Math.PI * 2); c.fill(); c.stroke();
+            });
+        }
+        window.addEventListener('resize', drawTrails);
+        document.getElementById('zoomable-img').addEventListener('load', drawTrails);
 
         function toggleSpecificTokenVisibility(tokenName) {
             if (!cachedNPCs[tokenName]) return;
@@ -2078,14 +2144,15 @@
                         if(me.role === 'master' || p.name === me.name) {
                             let isDraggingToken = false;
                             let lastDragPos = null;
-                            let dragStart = null, baseSteps = 0;
+                            let dragStart = null, baseMeters = 0, trailCommitted = false;
                             const tokenStart = (e) => {
                                 if(currentFogTool) return;
                                 e.preventDefault();
                                 e.stopPropagation();
                                 const cur = cachedNPCs[p.name] || p;
                                 dragStart = { x: parseFloat(cur[`${vId}_x`]), y: parseFloat(cur[`${vId}_y`]) };
-                                baseSteps = Number(cur.steps) || 0;
+                                baseMeters = Number(cur.meters) || 0;
+                                trailCommitted = false;
                                 isDraggingToken = true;
                                 wrap.classList.add('active-drag');
                             };
@@ -2104,7 +2171,15 @@
                                 let updates = {};
                                 updates[`${vId}_x`] = newX.toFixed(2);
                                 updates[`${vId}_y`] = newY.toFixed(2);
-                                if (stepGrid(vId)) updates.steps = baseSteps + stepsBetween(vId, dragStart, lastDragPos);
+                                if (stepGrid(vId)) updates.meters = baseMeters + metersBetween(vId, dragStart, lastDragPos);
+                                if (!trailCommitted && dragStart && isFinite(dragStart.x) && isFinite(dragStart.y)) {
+                                    const curP = cachedNPCs[p.name] || p;
+                                    const tp = parseTrail(curP[`${vId}_trail`]);
+                                    const lp = tp[tp.length - 1];
+                                    if (!lp || Math.abs(lp.x - dragStart.x) > 0.05 || Math.abs(lp.y - dragStart.y) > 0.05) tp.push({x: dragStart.x, y: dragStart.y});
+                                    updates[`${vId}_trail`] = trailString(tp.slice(-60));
+                                    trailCommitted = true;
+                                }
                                 campaignRef.child('players').child(p.name).update(updates);
                             };
                             const tokenEnd = (e) => {
@@ -2127,7 +2202,7 @@
                                         let up = {};
                                         up[`${vId}_x`] = sx.toFixed(2);
                                         up[`${vId}_y`] = sy.toFixed(2);
-                                        up.steps = baseSteps + stepsBetween(vId, dragStart, {x: sx, y: sy});
+                                        up.meters = baseMeters + metersBetween(vId, dragStart, {x: sx, y: sy});
                                         campaignRef.child('players').child(p.name).update(up);
                                     }
                                 }
@@ -2147,27 +2222,21 @@
                     wrap.classList.toggle('npc-token', p.type !== 'PC');
                     const badge = wrap.querySelector('.token-steps');
                     if (badge) {
-                        const st = Number(p.steps) || 0;
+                        const st = Number(p.meters) || 0;
                         badge.style.display = st > 0 ? 'block' : 'none';
-                        badge.textContent = '👣 ' + st;
+                        badge.textContent = '👣 ' + fmM(st) + ' m';
                         if (me.role === 'master') {
                             badge.style.pointerEvents = 'auto';
                             badge.style.cursor = 'pointer';
                             badge.onmousedown = (e) => e.stopPropagation();
                             badge.ontouchstart = (e) => e.stopPropagation();
-                            badge.onclick = () => editTokenSteps(p.name);
+                            badge.onclick = () => editTokenMeters(p.name);
                         }
                     }
                     
                     let label = wrap.querySelector('.token-name-plate');
                     if (label) {
-                        if (me.role === 'master') {
-                            label.innerHTML = `${p.name} <span style="cursor:pointer; font-size:1.1em;" onclick="toggleSpecificTokenVisibility('${p.name}')">${isSecret ? '👻' : '👁️'}</span>`;
-                            label.onmousedown = (e) => e.stopPropagation();
-                            label.ontouchstart = (e) => e.stopPropagation();
-                        } else {
-                            label.innerText = p.name;
-                        }
+                        label.innerText = p.name;
                     }
                     
                     if (isSecret) {
@@ -2196,6 +2265,7 @@
                 if(!activeNames.includes(t.dataset.name)) layer.removeChild(t);
             });
             loadStepsUI();
+            drawTrails();
         }
 
         function openChatLightbox(src) {

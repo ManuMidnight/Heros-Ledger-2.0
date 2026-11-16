@@ -2889,13 +2889,13 @@
 #sp-x{right:10px;color:#ff8a80}#sp-pos{right:34px;color:var(--amber)}
 #sp-toast{position:absolute;top:calc(10px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);background:var(--amber);color:#000;font-weight:bold;
  padding:6px 12px;border-radius:14px;font-size:.8rem;z-index:40;display:none;pointer-events:none;white-space:nowrap}
-#sp-clear{position:absolute;top:calc(72px + env(safe-area-inset-top,0px));right:8px;z-index:35;display:none;background:#b71c1c;color:#fff;
+#sp-clear{position:absolute;top:calc(var(--tbh,72px) + 6px);right:8px;z-index:35;display:none;background:#b71c1c;color:#fff;
  border:1px solid #fff;border-radius:14px;padding:6px 10px;font-size:.75rem;font-weight:bold;cursor:pointer}
 .sp-ok{color:#69f0ae}.sp-no{color:#ff8a80}.sp-cov{color:#ffd54f}
-#pl-sp-btn{position:absolute;left:8px;top:calc(72px + env(safe-area-inset-top,0px));z-index:35;display:none;background:rgba(20,12,8,.93);color:var(--amber);
+#pl-sp-btn{position:absolute;left:8px;top:calc(var(--tbh,72px) + 6px);z-index:35;display:none;background:rgba(20,12,8,.93);color:var(--amber);
  border:1px solid var(--gold);border-radius:14px;padding:6px 12px;font-size:.8rem;font-weight:bold;cursor:pointer}
 #pl-sp-btn.on{background:var(--amber);color:#000}
-#pl-sp{position:absolute;left:6px;right:6px;top:calc(108px + env(safe-area-inset-top,0px));z-index:34;display:none;box-sizing:border-box;
+#pl-sp{position:absolute;left:6px;right:6px;top:calc(var(--tbh,72px) + 42px);z-index:34;display:none;box-sizing:border-box;
  background:rgba(20,12,8,.95);border:1px solid var(--gold);border-radius:8px;padding:8px}
 #pl-sp .sp-row{margin-bottom:5px}
 #pl-sp .sp-row:last-child{margin-bottom:0}
@@ -3062,7 +3062,12 @@ function drawSpell(){
  else{const hw=lw*pxM/2;c.moveTo(C.x+n.x*hw,C.y+n.y*hw);c.lineTo(C.x+d.x*L+n.x*hw,C.y+d.y*L+n.y*hw);c.lineTo(C.x+d.x*L-n.x*hw,C.y+d.y*L-n.y*hw);c.lineTo(C.x-n.x*hw,C.y-n.y*hw);c.closePath();}
  c.fill();c.stroke();
 }
-function redraw(){drawGrid();drawSpell();}
+function placeUI(){
+ const tb=document.getElementById('map-topbar');
+ if(tb)zc.style.setProperty('--tbh',Math.max(0,Math.round(tb.getBoundingClientRect().bottom-zc.getBoundingClientRect().top))+'px');
+}
+{const tb=document.getElementById('map-topbar');if(tb&&window.ResizeObserver)new ResizeObserver(placeUI).observe(tb);}
+function redraw(){placeUI();drawGrid();drawSpell();}
 
 /* ---------- regole ---------- */
 const cross=(p,q,r)=>(q.x-p.x)*(r.y-p.y)-(q.y-p.y)*(r.x-p.x);
@@ -3489,7 +3494,7 @@ header{
 #sp-card{background:rgba(15,10,8,.95)!important;border:1px solid var(--gold)!important;border-radius:12px!important;font-family:var(--f-body);font-size:.95rem!important;backdrop-filter:blur(4px)}
 #sp-card.top{top:calc(66px + env(safe-area-inset-top,0px))}
 #sp-toast{top:calc(66px + env(safe-area-inset-top,0px))!important;font-family:var(--f-title);background:linear-gradient(180deg,#d4aa4a,#a67c25)!important}
-#sp-clear{top:calc(66px + env(safe-area-inset-top,0px))!important;font-family:var(--f-title);letter-spacing:.06em}
+#sp-clear{top:calc(var(--tbh,72px) + 6px)!important;font-family:var(--f-title);letter-spacing:.06em}
 
 /* token sulla mappa */
 .map-token{border-color:var(--gold-hi)}

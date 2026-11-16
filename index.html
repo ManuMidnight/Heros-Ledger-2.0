@@ -2891,6 +2891,15 @@
 #sp-clear{position:absolute;top:calc(8px + env(safe-area-inset-top,0px));right:8px;z-index:35;display:none;background:#b71c1c;color:#fff;
  border:1px solid #fff;border-radius:14px;padding:6px 10px;font-size:.75rem;font-weight:bold;cursor:pointer}
 .sp-ok{color:#69f0ae}.sp-no{color:#ff8a80}.sp-cov{color:#ffd54f}
+#pl-sp-btn{position:absolute;left:8px;top:calc(72px + env(safe-area-inset-top,0px));z-index:35;display:none;background:rgba(20,12,8,.93);color:var(--amber);
+ border:1px solid var(--gold);border-radius:14px;padding:6px 12px;font-size:.8rem;font-weight:bold;cursor:pointer}
+#pl-sp-btn.on{background:var(--amber);color:#000}
+#pl-sp{position:absolute;left:6px;right:6px;top:calc(108px + env(safe-area-inset-top,0px));z-index:34;display:none;box-sizing:border-box;
+ background:rgba(20,12,8,.95);border:1px solid var(--gold);border-radius:8px;padding:8px}
+#pl-sp .sp-row{margin-bottom:5px}
+#pl-sp .sp-row:last-child{margin-bottom:0}
+#pl-sp select{max-width:46%}
+#pl-sp .btn-taverna{padding:7px 12px;font-size:.8rem}
 </style>
 
 <script>
@@ -2952,6 +2961,19 @@ document.querySelector('.map-controls-grid').insertAdjacentHTML('beforeend',`
 </div>`);
 zc.insertAdjacentHTML('beforeend',`<div id="sp-card"><span id="sp-pos" title="Sposta in alto/basso" onclick="$card.classList.toggle('top')">⇅</span><span id="sp-x" onclick="$card.style.display='none'">✕</span><div id="sp-res"></div></div>
 <div id="sp-toast"></div><button id="sp-clear" onclick="spClear()">🧹 Cancella area</button>`);
+zc.insertAdjacentHTML('beforeend',`<button id="pl-sp-btn" onclick="plToggle()">🔮 Incantesimo</button>
+<div id="pl-sp">
+ <div class="sp-row"><select id="pl-preset" onchange="plPreset()">${PRESETS.map((p,i)=>`<option value="${i}">${p[0]}</option>`).join('')}</select>
+  <select id="pl-shape" onchange="plParams()"><option value="single">Singolo</option><option value="sphere">Sfera</option><option value="cube">Cubo</option><option value="cone">Cono</option><option value="line">Linea</option></select></div>
+ <div class="sp-row">
+  <span id="pl-rw">Gittata <input type="number" step="0.5" id="pl-range" value="36" oninput="spCalc()"> m</span>
+  <span id="pl-sw"><span id="pl-szl">Raggio</span> <input type="number" step="0.5" id="pl-size" value="6" oninput="spCalc()"> m</span>
+  <span id="pl-lw">Largh. <input type="number" step="0.5" id="pl-width" value="1.5" oninput="spCalc()"> m</span></div>
+ <div class="sp-row"><button id="pl-aim" class="btn-taverna" onclick="plAim()">🎯 Mira</button>
+  <button class="btn-taverna" style="background:#b71c1c;color:#fff" onclick="spClear()">🧹 Cancella</button>
+  <button class="btn-taverna" onclick="plToggle(false)">✕ Chiudi</button></div>
+</div>`);
+['mousedown','touchstart','touchmove'].forEach(ev=>{['pl-sp','pl-sp-btn'].forEach(id=>$(id).addEventListener(ev,e=>e.stopPropagation(),{passive:true}));});
 window.$card=$('sp-card');
 ['mousedown','touchstart','touchmove'].forEach(ev=>{$('sp-card').addEventListener(ev,e=>e.stopPropagation(),{passive:true});$('sp-clear').addEventListener(ev,e=>e.stopPropagation(),{passive:true});});
 
@@ -2964,7 +2986,7 @@ function toast(t){const e=$('sp-toast');e.textContent=t;e.style.display='block';
 function card(h){$('sp-res').innerHTML=h;$('sp-card').style.display='block';}
 function tokens(){
  const v=vid(),w=W(),h=H();
- return Object.values(cachedNPCs).filter(p=>p[v+'_x']>=0&&p[v+'_y']>=0).map(p=>({p,x:p[v+'_x']/100*w,y:p[v+'_y']/100*h}));
+ return Object.values(cachedNPCs).filter(p=>p[v+'_x']>=0&&p[v+'_y']>=0&&(me.role==='master'||!p.isSecret)).map(p=>({p,x:p[v+'_x']/100*w,y:p[v+'_y']/100*h}));
 }
 function walls(){
  const w=W(),h=H();
@@ -2974,8 +2996,8 @@ const wcol=t=>t>=99?'#f44336':t===5?'#ff9800':'#ffd54f';
 function problems(){
  const p=[];
  if(!(mapDataCache[vid()]||{}).url)p.push('Carica una mappa (🗺️ CARICA)');
- if(!cfg().on)p.push('Attiva la griglia (spunta 📏 Griglia)');
- if(!tokens().length)p.push('Piazza almeno un token (♟️ Token → ➕ Piazza)');
+ if(!cfg().on)p.push(me.role==='master'?'Attiva la griglia (spunta 📏 Griglia)':'Il master non ha ancora attivato la griglia: senza non posso misurare i metri');
+ if(!tokens().length)p.push(me.role==='master'?'Piazza almeno un token (♟️ Token → ➕ Piazza)':'Nessun token in mappa');
  return p;
 }
 
@@ -3001,6 +3023,7 @@ window.spClear=function(){
  last=null;target=null;clearTimeout(pubTimer);
  if(me.role==='master')campaignRef.child('spell').remove();
  drawSpell();if(panelOpen())card('🧹 Area cancellata. Premi 🎯 Mira e tocca la mappa per un nuovo incantesimo.');
+ if(me.role!=='master'){$('sp-card').style.display='none';if(mode==='aim')card('🎯 Tocca (o trascina) sulla mappa per mirare.');}
 };
 window.spShare=function(){if(!$('sp-share').checked&&me.role==='master')campaignRef.child('spell').remove();else publish(true);toast($('sp-share').checked?'Visibile ai giocatori 👁️':'Nascosto ai giocatori');};
 
@@ -3025,7 +3048,7 @@ function drawSpell(){
   if(wallStart&&wallEnd)seg(c,wallStart.x,wallStart.y,wallEnd.x,wallEnd.y,+$('sp-cover').value);
  }
  const geo=last||(remote&&remote.on&&remote.mapId===vid()?geomRemote(remote):null);
- $('sp-clear').style.display=(me.role==='master'&&geo)?'block':'none';
+ $('sp-clear').style.display=((me.role==='master'&&geo)||(me.role!=='master'&&last))?'block':'none';
  if(!geo)return;
  const {shape,C,P,L,d,lw,range,pxM,cell}=geo,n={x:-d.y,y:d.x};
  c.fillStyle='rgba(255,60,60,.3)';c.strokeStyle='#ff5252';c.lineWidth=2;
@@ -3049,11 +3072,12 @@ const covLabel=c=>c>=99?'TOTALE (non colpibile)':c===5?'tre quarti (+5 CA/TS Des
 function calc(){
  const pr=problems();
  if(pr.length){card('<b>Prima di lanciare:</b><br>'+pr.map(x=>'⚠️ '+x).join('<br>'));last=null;drawSpell();return;}
- const T=tokens(),cn=$('sp-caster').value,Ct=T.find(t=>t.p.name===cn);
- if(!Ct){card('⚠️ Scegli il lanciatore (menu al punto 2): deve essere un token in mappa.');last=null;drawSpell();return;}
+ const T=tokens(),cn=me.role==='master'?$('sp-caster').value:me.name,Ct=T.find(t=>t.p.name===cn);
+ if(!Ct){card(me.role==='master'?'⚠️ Scegli il lanciatore (menu al punto 2): deve essere un token in mappa.':'⚠️ Il tuo token non è sulla mappa: il master deve piazzarlo.');last=null;drawSpell();return;}
  if(!target){card('🎯 Tocca (o trascina) sulla mappa per mirare.');drawSpell();return;}
  const g=cfg(),cell=W()/g.cols,pxM=cell/M_PER_SQ;
- const shape=$('sp-shape').value,range=+$('sp-range').value||0,size=+$('sp-size').value||0,lw=+$('sp-width').value||M_PER_SQ;
+ const ctl=k=>(me.role==='master'?$('sp-'+k):$('pl-'+k)).value;
+ const shape=ctl('shape'),range=+ctl('range')||0,size=+ctl('size')||0,lw=+ctl('width')||M_PER_SQ;
  const C={x:Ct.x,y:Ct.y},P=target,L=size*pxM;
  const len=Math.hypot(P.x-C.x,P.y-C.y)||1,d={x:(P.x-C.x)/len,y:(P.y-C.y)/len};
  const dist=(a,b)=>Math.round(Math.max(Math.abs(a.x-b.x),Math.abs(a.y-b.y))/cell)*M_PER_SQ;
@@ -3086,7 +3110,7 @@ function calc(){
  if(!hits.length)html+='<div>Nessun bersaglio nell\'area.</div>';
  hits.forEach(t=>{
   const c=cover(t),ac=(+t.p.ac||0)+(+t.p.tempAc||0),cls=c>=99?'sp-no':c>0?'sp-cov':'sp-ok';
-  html+=`<div class="${cls}">• <b>${t.p.name}</b> — ${fm(dist(C,t))} m — copertura: ${covLabel(c)}${c>=99?'':` — CA ${ac}${c?'→'+(ac+c):''}`}</div>`;
+  html+=`<div class="${cls}">• <b>${t.p.name}</b> — ${fm(dist(C,t))} m — copertura: ${covLabel(c)}${(c>=99||(me.role!=='master'&&t.p.type!=='PC'))?'':` — CA ${ac}${c?'→'+(ac+c):''}`}</div>`;
  });
  card(html);drawSpell();publish();
 }
@@ -3097,7 +3121,8 @@ function pt(e){
  return {x:(t.clientX-r.left)/r.width*W(),y:(t.clientY-r.top)/r.height*H()};
 }
 function st(e){
- if(!mode||me.role!=='master'||e.target.closest('#sp-card,#sp-clear'))return;
+ if(!mode||e.target.closest('#sp-card,#sp-clear,#pl-sp,#pl-sp-btn'))return;
+ if(me.role!=='master'&&mode!=='aim')return;
  e.preventDefault();e.stopImmediatePropagation();down=true;
  const p=pt(e);
  if(mode==='aim'){target=p;calc();}else{wallStart=p;wallEnd=p;}
@@ -3160,6 +3185,34 @@ window.spMode=function(m){
  else card('Mappa libera: puoi spostarla e zoomare. Premi 🎯 Mira per riprendere.');
 };
 window.spCalc=calc;
+/* ---- incantesimi per i giocatori: calcolo solo locale, non tocca l'area condivisa dal master ---- */
+window.plParams=function(){
+ const s=$('pl-shape').value;
+ $('pl-rw').style.display=(s==='cone'||s==='line')?'none':'';
+ $('pl-sw').style.display=s==='single'?'none':'';
+ $('pl-lw').style.display=s==='line'?'':'none';
+ $('pl-szl').textContent=s==='sphere'?'Raggio':s==='cube'?'Lato':'Lungh.';
+ calc();
+};
+window.plPreset=function(){
+ const i=+$('pl-preset').value,p=PRESETS[i];
+ if(i>0){$('pl-shape').value=p[1];$('pl-range').value=p[2];$('pl-size').value=p[3];$('pl-width').value=p[4];}
+ plParams();
+ if(mode!=='aim')plAim();
+};
+window.plAim=function(){
+ mode=(mode==='aim')?null:'aim';
+ $('pl-aim').classList.toggle('active-tool',mode==='aim');
+ if(mode==='aim')calc();
+ else card('Mappa libera: puoi spostarla e zoomare. Premi 🎯 Mira per riprendere.');
+};
+window.plToggle=function(open){
+ const pn=$('pl-sp'),show=(typeof open==='boolean')?open:pn.style.display!=='block';
+ pn.style.display=show?'block':'none';
+ $('pl-sp-btn').classList.toggle('on',show);
+ if(show){plParams();mode=null;$('pl-aim').classList.remove('active-tool');card('Scegli l\'incantesimo e premi 🎯 Mira, poi tocca la mappa sul bersaglio.');}
+ else{mode=null;last=null;target=null;$('sp-card').style.display='none';drawSpell();}
+};
 window.spUndoWall=()=>{const ws=(mapDataCache[masterActiveMap]||{}).walls||{},k=Object.keys(ws).pop();if(k)campaignRef.child('maps').child(masterActiveMap).child('walls').child(k).remove();};
 window.spClearWalls=()=>{if(confirm('Rimuovere tutte le coperture di questa mappa?'))campaignRef.child('maps').child(masterActiveMap).child('walls').remove();};
 
@@ -3187,7 +3240,9 @@ window.applyCurrentMapView=function(){
 const _tok=window.renderMapTokens;
 window.renderMapTokens=function(){_tok.apply(this,arguments);sync();};
 const _open=window.openMapLightbox;
-window.openMapLightbox=function(){_open.apply(this,arguments);setTimeout(redraw,220);setTimeout(redraw,600);};
+window.openMapLightbox=function(){_open.apply(this,arguments);$('pl-sp-btn').style.display=(me.role==='master')?'none':'block';setTimeout(redraw,220);setTimeout(redraw,600);};
+const _close=window.closeMapLightbox;
+window.closeMapLightbox=function(){if(me.role!=='master')plToggle(false);_close.apply(this,arguments);};
 window.switchMasterTool=function(t){
  ['token','fog','options','grid'].forEach(x=>{$('tool-group-'+x).classList.toggle('hidden',x!==t);$('tab-tool-'+x).classList.toggle('active',x===t);});
  if(t!=='grid'){mode=null;$('btn-sp-aim').classList.remove('active-tool');$('btn-sp-wall').classList.remove('active-tool');$('sp-wallrow').classList.add('hidden');$('sp-card').style.display='none';}

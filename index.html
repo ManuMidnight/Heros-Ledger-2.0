@@ -2883,12 +2883,13 @@
 .sp-v{color:#fff;min-width:28px;display:inline-block}
 #sp-card{position:absolute;bottom:6px;left:6px;right:6px;max-height:30%;overflow-y:auto;touch-action:pan-y;display:none;z-index:30;
  background:rgba(20,12,8,.93);border:1px solid var(--gold);border-radius:8px;padding:8px 56px 8px 10px;font-size:.8rem;color:#fff;text-align:left}
+#sp-card.pl:not(.top){bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 #sp-card.top{bottom:auto;top:calc(6px + env(safe-area-inset-top,0px))}
 #sp-x,#sp-pos{position:absolute;top:4px;cursor:pointer;font-size:1rem}
 #sp-x{right:10px;color:#ff8a80}#sp-pos{right:34px;color:var(--amber)}
 #sp-toast{position:absolute;top:calc(10px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);background:var(--amber);color:#000;font-weight:bold;
  padding:6px 12px;border-radius:14px;font-size:.8rem;z-index:40;display:none;pointer-events:none;white-space:nowrap}
-#sp-clear{position:absolute;top:calc(8px + env(safe-area-inset-top,0px));right:8px;z-index:35;display:none;background:#b71c1c;color:#fff;
+#sp-clear{position:absolute;top:calc(72px + env(safe-area-inset-top,0px));right:8px;z-index:35;display:none;background:#b71c1c;color:#fff;
  border:1px solid #fff;border-radius:14px;padding:6px 10px;font-size:.75rem;font-weight:bold;cursor:pointer}
 .sp-ok{color:#69f0ae}.sp-no{color:#ff8a80}.sp-cov{color:#ffd54f}
 #pl-sp-btn{position:absolute;left:8px;top:calc(72px + env(safe-area-inset-top,0px));z-index:35;display:none;background:rgba(20,12,8,.93);color:var(--amber);
@@ -2983,7 +2984,7 @@ const vid=()=>getMyViewMapId();
 const cfg=()=>Object.assign({on:false,cols:30,col:'both',op:80,ox:0,oy:0},(mapDataCache[vid()]||{}).grid||{});
 const panelOpen=()=>me.role==='master'&&!$('tool-group-grid').classList.contains('hidden');
 function toast(t){const e=$('sp-toast');e.textContent=t;e.style.display='block';clearTimeout(tt);tt=setTimeout(()=>e.style.display='none',2200);}
-function card(h){$('sp-res').innerHTML=h;$('sp-card').style.display='block';}
+function card(h){$('sp-card').classList.toggle('pl',me.role!=='master');$('sp-res').innerHTML=h;$('sp-card').style.display='block';}
 function tokens(){
  const v=vid(),w=W(),h=H();
  return Object.values(cachedNPCs).filter(p=>p[v+'_x']>=0&&p[v+'_y']>=0&&(me.role==='master'||!p.isSecret)).map(p=>({p,x:p[v+'_x']/100*w,y:p[v+'_y']/100*h}));
@@ -3052,7 +3053,7 @@ function drawSpell(){
  if(!geo)return;
  const {shape,C,P,L,d,lw,range,pxM,cell}=geo,n={x:-d.y,y:d.x};
  c.fillStyle='rgba(255,60,60,.3)';c.strokeStyle='#ff5252';c.lineWidth=2;
- if(range&&shape!=='cone'&&shape!=='line'){c.save();c.setLineDash([6,4]);c.strokeStyle='#40c4ff';const r=range*pxM;c.strokeRect(C.x-r,C.y-r,2*r,2*r);c.restore();}
+ if(me.role==='master'&&range&&shape!=='cone'&&shape!=='line'){c.save();c.setLineDash([6,4]);c.strokeStyle='#40c4ff';const r=range*pxM;c.strokeRect(C.x-r,C.y-r,2*r,2*r);c.restore();}
  c.beginPath();
  if(shape==='sphere')c.arc(P.x,P.y,L,0,7);
  else if(shape==='cube')c.rect(P.x-L/2,P.y-L/2,L,L);

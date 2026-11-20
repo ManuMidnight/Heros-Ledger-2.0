@@ -3620,5 +3620,170 @@ tabs.addEventListener('click',e=>{
 [fog,mp].forEach(el=>el.addEventListener('touchmove',e=>e.stopPropagation(),{passive:true}));
 })();
 </script>
-<!-- ===== FINE SKIN v2 ===== --></body>
+<!-- ===== FINE SKIN v2 ===== -->
+<!-- ===== ADD-ON INVENTARIO v1 (incolla prima di </body>, dopo gli altri add-on) ===== -->
+<style>
+#inv-btn{right:44px}
+#inv-badge{position:absolute;top:-6px;right:-8px;background:#c0392b;color:#fff;border-radius:999px;font:700 .6rem system-ui;padding:1px 5px}
+#modal-inv .modal-content{width:min(94vw,440px)!important}
+.inv-tabs{display:flex;gap:5px;overflow-x:auto;margin:8px 0;padding-bottom:4px;touch-action:pan-x}
+.inv-tabs button{flex:none;border:1px solid var(--gold);background:#241a15;color:var(--parchment);border-radius:999px;padding:5px 11px;font-size:.75rem;cursor:pointer}
+.inv-tabs button.on{background:var(--amber);color:#000;font-weight:700}
+.ic{display:flex;gap:8px;background:#f2e3bd;color:#2a1a0e;border:3px solid #999;border-radius:12px;padding:7px;margin-bottom:8px;text-align:left}
+.ic img{width:62px;height:62px;object-fit:cover;border-radius:8px;flex:none}
+.ib{flex:1;min-width:0;font-size:.85rem;line-height:1.25}.ib .is{font-size:.68rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.ib .st{font-size:.72rem;color:#5b4f3c}.ib .cu{color:#8e1c1c;font-weight:700}
+.iq{background:#2a1a0e;color:#f2e3bd;border-radius:999px;padding:0 7px;font-size:.72rem}
+.ia{display:flex;flex-direction:column;gap:4px;flex:none}
+.ia button,.itr button{padding:4px 8px!important;font-size:.65rem!important;margin:0 2px}
+.itr{background:rgba(232,195,106,.15);border:1px dashed var(--gold);border-radius:10px;padding:7px;margin:6px 0;font-size:.85rem;color:#fff}
+.itr select,.itr input{width:auto;display:inline-block;padding:4px;margin:2px;font-size:.8rem}
+.itr input[type=number]{width:52px}
+</style>
+<div id="modal-inv" class="modal"><div class="modal-content" id="inv-box">
+ <h3>🎒 Zaino</h3>
+ <div id="inv-master" class="hidden">
+  <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
+   <select id="inv-who" style="flex:1"></select>
+   <label class="btn-taverna" style="margin:0;font-size:.65rem">📥 Importa mazzo<input type="file" id="inv-file" accept=".json,application/json" style="display:none"></label>
+  </div>
+  <div style="display:flex;gap:5px;align-items:center;margin-top:4px">
+   <select id="inv-give-card" style="flex:1"></select>
+   <input type="number" id="inv-give-qty" value="1" min="1" style="width:56px">
+   <button class="btn-taverna" data-a="give">Dai</button>
+  </div>
+  <label style="display:flex;align-items:center;font-size:.8rem;color:#fff;margin-top:4px"><input type="checkbox" id="inv-give-unk"> 🔒 Dai come non identificata</label>
+ </div>
+ <div id="inv-trades"></div><div id="inv-tabs" class="inv-tabs"></div><div id="inv-list"></div>
+ <button class="btn-taverna" style="width:100%;margin-top:8px;background:#b71c1c;color:#fff" onclick="document.getElementById('modal-inv').style.display='none'">CHIUDI</button>
+</div></div>
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const CAT={arma:'Armi',armatura:'Armature',scudo:'Scudi',pozione:'Pozioni',pergamena:'Pergamene',anello:'Anelli',bacchetta:'Bacchette',meraviglioso:'Meraviglie',equip:'Equip.',tesoro:'Tesori'};
+const CONS={pozione:1,pergamena:1};
+const RC={comune:'#9a968c',non_comune:'#62b36f',raro:'#5f9fe6',molto_raro:'#a672dc',leggendario:'#f2bd50',artefatto:'#dc4a3e'};
+const RN={comune:'Comune',non_comune:'Non comune',raro:'Raro',molto_raro:'Molto raro',leggendario:'Leggendario',artefatto:'Artefatto'};
+let catalog={},inv={},trades={},unk={},tab='all',tr=null,lastIn=0;
+const UNK={arma:'Arma sconosciuta',armatura:'Armatura sconosciuta',scudo:'Scudo sconosciuto',pozione:'Pozione sconosciuta',pergamena:'Pergamena sconosciuta',anello:'Anello sconosciuto',bacchetta:'Bacchetta sconosciuta',meraviglioso:'Oggetto sconosciuto',equip:'Equipaggiamento sconosciuto',tesoro:'Tesoro sconosciuto'};
+const HINT="Non sai ancora che cos'è. Un incantesimo di Identificare, oppure un riposo breve a contatto con l'oggetto, ne rivelerà i segreti.";
+const isU=(who,id)=>!!((unk[who]||{})[id]);
+const nm=(who,id)=>{const c=catalog[id];return !c?'?':(isU(who,id)?(UNK[c.type]||'Oggetto sconosciuto'):c.name);};
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const rich=s=>esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');
+const pcs=()=>Object.values(cachedNPCs||{}).filter(p=>p.type==='PC').map(p=>p.name);
+const whom=()=>me.role==='master'?($('inv-who').value||''):me.name;
+const adj=(who,id,d)=>campaignRef.child('inventory').child(who).child(id).transaction(v=>{if(v===null)return d>0?d:v;const n=v+d;return n>0?n:null;});
+const say=t=>campaignRef.child('messages').push({sender:me.name,senderRole:me.role==='master'?'master':'player',photo:me.photo,text:t,lang:'Comune',to:'ALL',time:Date.now()});
+
+document.querySelector('#game-ui > header').insertAdjacentHTML('beforeend','<button id="inv-btn" class="settings-btn" onclick="invOpen()">🎒<span id="inv-badge" class="hidden"></span></button>');
+window.invOpen=function(){tab='all';tr=null;$('modal-inv').style.display='flex';render();};
+
+function cardHtml(id,q,M,who){
+ const c=catalog[id];if(!c)return '';
+ const u=isU(who,id),btn=(a,l)=>`<button class="btn-taverna" data-a="${a}" data-i="${id}">${l}</button>`;
+ if(u&&!M)return `<div class="ic" style="border-color:#8a99b4"><div class="ib"><b>${esc(UNK[c.type]||'Oggetto sconosciuto')}</b> <span class="iq">×${q}</span><div class="is" style="color:#8a99b4">${CAT[c.type]||''} · non identificato</div><div style="font-style:italic">${esc((c.hint&&c.hint.trim())||HINT)}</div></div><div class="ia">${CONS[c.type]?btn('use','🧪 Usa'):''}${btn('tr','🔁 Scambia')}</div></div>`;
+ const col=RC[c.rarity]||'#999',st=Object.values(c.stats||{}).filter(Boolean).map(esc).join(' · ');
+ return `<div class="ic" style="border-color:${col}">${c.img?`<img src="${c.img}">`:''}<div class="ib"><b>${esc(c.name)}</b> <span class="iq">×${q}</span>
+ <div class="is" style="color:${col}">${RN[c.rarity]||''} · ${CAT[c.type]||''}${c.subtype?' · '+esc(c.subtype):''}${c.attune?' · sintonia':''}${u?' · 🔒 non identificato':''}</div>
+ ${st?`<div class="st">${st}</div>`:''}${c.charges?`<div class="st">${c.charges} cariche${c.recharge?' · '+esc(c.recharge):''}</div>`:''}
+ ${c.effect?`<div>${rich(c.effect)}</div>`:''}${c.curse?`<div class="cu">Maledizione: ${rich(c.curse)}</div>`:''}${c.flavor?`<div style="font-style:italic;color:#5b4f3c">${rich(c.flavor)}</div>`:''}</div>
+ <div class="ia">${CONS[c.type]?btn('use','🧪 Usa'):''}${me.role!=='master'?btn('tr','🔁 Scambia'):(u?btn('rev','👁️ Rivela'):'')+btn('add','＋1')+btn('drop','−1')}</div></div>`;
+}
+function render(){
+ if($('modal-inv').style.display!=='flex')return;
+ const M=me.role==='master';
+ $('inv-master').classList.toggle('hidden',!M);
+ if(M){
+  const w=$('inv-who'),n=pcs(),k=n.join('|');
+  if(w.dataset.k!==k){const o=w.value;w.innerHTML=n.map(x=>`<option>${esc(x)}</option>`).join('');if(n.includes(o))w.value=o;w.dataset.k=k;}
+  const g=$('inv-give-card'),ids=Object.keys(catalog),kk=ids.join('|');
+  if(g.dataset.k!==kk){g.innerHTML=ids.map(i=>`<option value="${i}">${esc(catalog[i].name)}</option>`).join('')||'<option value="">(importa un mazzo)</option>';g.dataset.k=kk;}
+ }
+ const mine=inv[whom()]||{};
+ let th='';
+ Object.entries(trades).forEach(([t,x])=>{
+  const c=catalog[x.card];if(!c)return;
+  if(x.to===me.name)th+=`<div class="itr">📨 <b>${esc(x.from)}</b> ti offre <b>${esc(nm(x.from,x.card))}</b> ×${x.qty} <button class="btn-taverna" data-a="ok" data-t="${t}">Accetta</button><button class="btn-taverna" data-a="no" data-t="${t}">Rifiuta</button></div>`;
+  else if(x.from===me.name)th+=`<div class="itr">⏳ Offerta a ${esc(x.to)}: ${esc(nm(x.from,x.card))} ×${x.qty} <button class="btn-taverna" data-a="no" data-t="${t}">Annulla</button></div>`;
+ });
+ if(tr&&catalog[tr])th+=`<div class="itr">Scambia <b>${esc(nm(me.name,tr))}</b> con <select id="inv-to">${pcs().filter(n=>n!==me.name).map(n=>`<option>${esc(n)}</option>`).join('')}</select> ×<input type="number" id="inv-tq" min="1" value="1"><button class="btn-taverna" data-a="send">Invia</button><button class="btn-taverna" data-a="cancel">✕</button></div>`;
+ $('inv-trades').innerHTML=th;
+ const ids=Object.keys(mine).filter(i=>catalog[i]);
+ const cats=[...new Set(ids.map(i=>catalog[i].type))];
+ if(tab!=='all'&&!cats.includes(tab))tab='all';
+ $('inv-tabs').innerHTML=ids.length?[['all','Tutti']].concat(cats.map(c=>[c,CAT[c]||c])).map(([k,l])=>`<button data-a="tab" data-i="${k}" class="${tab===k?'on':''}">${l}</button>`).join(''):'';
+ $('inv-list').innerHTML=ids.filter(i=>tab==='all'||catalog[i].type===tab).map(i=>cardHtml(i,mine[i],M,whom())).join('')
+  ||`<p style="text-align:center;color:#a8946a">${M?'Questo giocatore non ha ancora carte.':'Lo zaino è vuoto.'}</p>`;
+}
+function accept(t){
+ const x=trades[t];if(!x||x.to!==me.name)return;
+ const c=catalog[x.card],have=((inv[x.from]||{})[x.card])||0;
+ if(!c||have<x.qty){alert('Scambio non più valido: '+x.from+' non ha più quella carta.');campaignRef.child('trades').child(t).remove();return;}
+ adj(x.from,x.card,-x.qty).then(r=>{
+  if(!r.committed)return alert('Scambio non riuscito, riprova.');
+  const wasU=isU(x.from,x.card),had=((inv[me.name]||{})[x.card])||0,label=nm(x.from,x.card);
+  return adj(me.name,x.card,x.qty).then(()=>{
+   if(wasU&&!had)campaignRef.child('unknown').child(me.name).child(x.card).set(true);
+   if(have===x.qty)campaignRef.child('unknown').child(x.from).child(x.card).remove();
+   campaignRef.child('trades').child(t).remove();say(`🔁 ${x.from} ha dato ${label} ×${x.qty} a ${me.name}.`);});
+ });
+}
+$('modal-inv').addEventListener('click',e=>{
+ const b=e.target.closest('[data-a]');if(!b)return;
+ const a=b.dataset.a,id=b.dataset.i,who=whom(),c=catalog[id];
+ if(a==='use'){{const n=nm(who,id);if(confirm(`Usare "${n}"? Verrà consumata.`))adj(who,id,-1).then(()=>say(`🧪 ${who} usa ${n}.`));}}
+ else if(a==='drop'){if(confirm('Rimuovere una copia?'))adj(who,id,-1);}
+ else if(a==='add')adj(who,id,1);
+ else if(a==='give'){
+  const g=$('inv-give-card').value,q=Math.max(1,parseInt($('inv-give-qty').value)||1),u=$('inv-give-unk').checked,have=((inv[who]||{})[g])||0;
+  if(g&&who){
+   if(!have){const r=campaignRef.child('unknown').child(who).child(g);u?r.set(true):r.remove();}
+   adj(who,g,q).then(()=>say(`🎁 ${who} riceve ${(u&&!have)?(UNK[catalog[g].type]||'un oggetto'):catalog[g].name} ×${q}.`));
+  }
+ }
+ else if(a==='rev'){campaignRef.child('unknown').child(who).child(id).remove().then(()=>say(`🔍 ${who} ha identificato: ${c.name}.`));}
+ else if(a==='tr'){tr=id;render();}
+ else if(a==='cancel'){tr=null;render();}
+ else if(a==='send'){
+  const to=$('inv-to').value,q=Math.max(1,parseInt($('inv-tq').value)||1),have=((inv[me.name]||{})[tr])||0;
+  if(!to)return alert('Nessun giocatore a cui scambiare.');
+  if(q>have)return alert('Ne hai solo '+have+'.');
+  campaignRef.child('trades').push({from:me.name,to,card:tr,qty:q,time:Date.now()});tr=null;
+ }
+ else if(a==='ok')accept(b.dataset.t);
+ else if(a==='no')campaignRef.child('trades').child(b.dataset.t).remove();
+ else if(a==='tab'){tab=id;render();}
+});
+$('inv-who').addEventListener('change',()=>{tab='all';render();});
+$('inv-file').addEventListener('change',e=>{
+ const f=e.target.files[0];if(!f)return;
+ const r=new FileReader();
+ r.onload=()=>{try{
+  const o=JSON.parse(r.result),arr=Array.isArray(o)?o:o.cards,add={};let n=0;
+  arr.forEach(c=>{if(c&&c.id&&c.name&&CAT[c.type]){const k=Object.assign({},c);delete k.dm;delete k.updated;add[c.id]=k;n++;}});
+  if(!n)throw 0;
+  campaignRef.child('cards').update(add).then(()=>alert(`Importate ${n} carte nel catalogo (le note del DM non vengono condivise).`));
+ }catch(x){alert('Il file non è un mazzo valido della Forgia.');}};
+ r.readAsText(f);e.target.value='';
+});
+function badge(){
+ const n=Object.values(trades).filter(x=>x.to===me.name).length,b=$('inv-badge');
+ b.textContent=n;b.classList.toggle('hidden',!n);
+ if(n>lastIn&&typeof playTavernBell==='function')playTavernBell();
+ lastIn=n;
+}
+const _s=window.setupSync;
+window.setupSync=function(){
+ _s.apply(this,arguments);
+ const r=campaignRef;
+ r.child('cards').on('value',s=>{catalog=s.val()||{};render();});
+ r.child('inventory').on('value',s=>{inv=s.val()||{};render();});
+ r.child('trades').on('value',s=>{trades=s.val()||{};badge();render();});
+ r.child('unknown').on('value',s=>{unk=s.val()||{};render();});
+};
+})();
+</script>
+<!-- ===== FINE ADD-ON INVENTARIO ===== -->
+</body>
 </html>

@@ -4565,7 +4565,13 @@ apply();
 <!-- ===== ADD-ON SCHEDA PERSONAGGIO v1 ===== -->
 <style>
 #sheet-btn{right:78px}
-#modal-sheet .modal-content{width:min(97vw,620px)!important;padding:10px 12px 14px!important;max-height:94vh}
+/* icone in alto: spazio riservato nell'header per non sovrapporle al nome della campagna */
+#game-ui>header{padding-right:122px!important}
+#game-ui>header .settings-btn{padding:0;width:30px;text-align:center;line-height:1.2}
+#btn-settings{right:8px!important}#inv-btn{right:42px!important}#sheet-btn{right:76px!important}
+/* area sicura: la scheda parte sotto la barra di stato e sopra la barra di navigazione */
+#modal-sheet{box-sizing:border-box;padding:calc(env(safe-area-inset-top,0px) + 8px) calc(env(safe-area-inset-right,0px) + 4px) calc(env(safe-area-inset-bottom,0px) + 8px) calc(env(safe-area-inset-left,0px) + 4px)}
+#modal-sheet .modal-content{width:min(97vw,620px)!important;padding:10px 12px 14px!important;max-height:100%!important;box-sizing:border-box}
 .sh-top{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px}
 .sh-top h3{flex:1;margin:0!important;border:0!important;padding:0!important;text-align:left!important;font-size:1rem!important;min-width:90px}
 #sh-who{width:auto;max-width:44vw;padding:5px;font-size:.8rem}

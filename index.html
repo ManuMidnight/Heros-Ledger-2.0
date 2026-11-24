@@ -4564,11 +4564,15 @@ apply();
 <!-- ===== FINE ADD-ON CARTE 3D ===== -->
 <!-- ===== ADD-ON SCHEDA PERSONAGGIO v1 ===== -->
 <style>
-#sheet-btn{right:78px}
-/* icone in alto: spazio riservato nell'header per non sovrapporle al nome della campagna */
-#game-ui>header{padding-right:122px!important}
-#game-ui>header .settings-btn{padding:0;width:30px;text-align:center;line-height:1.2}
-#btn-settings{right:8px!important}#inv-btn{right:42px!important}#sheet-btn{right:76px!important}
+/* intestazione: ESCI · nome · codice a sinistra, icone allineate a destra (scheda, zaino, impostazioni) */
+#game-ui>header{justify-content:flex-start!important;gap:6px!important;padding-left:max(10px,env(safe-area-inset-left,0px))!important;padding-right:max(8px,env(safe-area-inset-right,0px))!important;flex-wrap:nowrap}
+#game-ui>header .exit-btn,#game-ui>header .settings-btn{position:relative!important;left:auto!important;right:auto!important;top:auto!important;flex:none}
+#game-ui>header .exit-btn{padding:4px 9px;font-size:.66rem;margin:0}
+#game-ui>header #display-name{min-width:0;flex:0 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.86rem;letter-spacing:.05em}
+#game-ui>header #display-code{flex:none;font-size:.6rem;letter-spacing:.12em;padding:2px 8px}
+#game-ui>header #round-display{flex:none;margin:0!important}
+#game-ui>header .settings-btn{width:30px;height:30px;padding:0;display:flex;align-items:center;justify-content:center;font-size:1.15rem}
+#sheet-btn{order:1;margin-left:auto}#inv-btn{order:2}#btn-settings{order:3}
 /* area sicura: la scheda parte sotto la barra di stato e sopra la barra di navigazione */
 #modal-sheet{box-sizing:border-box;padding:calc(env(safe-area-inset-top,0px) + 8px) calc(env(safe-area-inset-right,0px) + 4px) calc(env(safe-area-inset-bottom,0px) + 8px) calc(env(safe-area-inset-left,0px) + 4px)}
 #modal-sheet .modal-content{width:min(97vw,620px)!important;padding:10px 12px 14px!important;max-height:100%!important;box-sizing:border-box}
@@ -4644,7 +4648,23 @@ const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;',
 const AB=[['str','FOR','Forza'],['dex','DES','Destrezza'],['con','COS','Costituzione'],['int','INT','Intelligenza'],['wis','SAG','Saggezza'],['cha','CAR','Carisma']];
 const ABS=Object.fromEntries(AB.map(a=>[a[0],a[1]]));
 const SK=[['acr','Acrobazia','dex'],['ani','Addestrare animali','wis'],['arc','Arcano','int'],['ath','Atletica','str'],['ste','Furtività','dex'],['inv','Indagare','int'],['dec','Inganno','cha'],['itm','Intimidire','cha'],['prf','Intrattenere','cha'],['ins','Intuizione','wis'],['med','Medicina','wis'],['nat','Natura','int'],['per','Percezione','wis'],['psu','Persuasione','cha'],['sle','Rapidità di mano','dex'],['rel','Religione','int'],['sur','Sopravvivenza','wis'],['sto','Storia','int']];
+const SUBS={
+Barbaro:['Sentiero del Berserker','Sentiero del Guerriero Totemico','Sentiero del Guerriero Ancestrale','Sentiero del Furioso Tempestoso','Sentiero del Credente Zelota','Sentiero della Bestia','Sentiero della Magia Selvaggia'],
+Bardo:['Collegio della Sapienza','Collegio del Valore','Collegio del Glamour','Collegio delle Spade','Collegio dei Sussurri','Collegio della Creazione','Collegio dell’Eloquenza'],
+Chierico:['Dominio della Conoscenza','Dominio della Vita','Dominio della Luce','Dominio della Natura','Dominio della Tempesta','Dominio dell’Inganno','Dominio della Guerra','Dominio della Forgia','Dominio della Tomba','Dominio dell’Ordine','Dominio della Pace','Dominio del Crepuscolo','Dominio dell’Arcano'],
+Druido:['Circolo della Terra','Circolo della Luna','Circolo dei Sogni','Circolo del Pastore','Circolo delle Spore','Circolo delle Stelle','Circolo del Fuoco Selvaggio'],
+Guerriero:['Campione','Maestro di Battaglia','Cavaliere Mistico','Arciere Arcano','Cavaliere','Samurai','Guerriero Psichico','Cavaliere Runico','Cavaliere dell’Eco'],
+Ladro:['Ladro','Assassino','Furfante Arcano','Inquisitore','Mente Sopraffina','Esploratore','Spadaccino','Fantasma','Lama dell’Anima'],
+Mago:['Scuola di Abiurazione','Scuola di Invocazione','Scuola di Divinazione','Scuola di Ammaliamento','Scuola di Evocazione','Scuola di Illusione','Scuola di Necromanzia','Scuola di Trasmutazione','Magia della Guerra','Cantalama','Ordine degli Scribi'],
+Monaco:['Via della Mano Aperta','Via dell’Ombra','Via dei Quattro Elementi','Via dell’Anima Solare','Via dell’Ubriaco','Via del Kensei','Via della Misericordia','Via della Maestria Astrale'],
+Paladino:['Giuramento di Devozione','Giuramento degli Antichi','Giuramento di Vendetta','Giuramento di Conquista','Giuramento di Redenzione','Giuramento della Gloria','Giuramento dei Custodi','Traditore del Giuramento'],
+Ranger:['Cacciatore','Signore delle Bestie','Cacciatore delle Ombre','Viandante dell’Orizzonte','Uccisore di Mostri','Vagabondo Fatato','Custode dello Sciame','Compagno Drago'],
+Stregone:['Discendenza Draconica','Magia Selvaggia','Anima Divina','Stregoneria delle Ombre','Stregoneria della Tempesta','Mente Aberrante','Anima Meccanica'],
+Warlock:['Patrono: Signore Fatato','Patrono: Immondo','Patrono: Grande Antico','Patrono: Non Morto','Patrono: Celestiale','Patrono: Lama Maledetta (Hexblade)','Patrono: Genio']
+};
+const GUN='Gunslinger (Pistolero)';
 const CLS={Barbaro:{hd:12,sv:['str','con']},Bardo:{hd:8,sv:['dex','cha'],sp:'cha'},Chierico:{hd:8,sv:['wis','cha'],sp:'wis'},Druido:{hd:8,sv:['int','wis'],sp:'wis'},Guerriero:{hd:10,sv:['str','con']},Ladro:{hd:8,sv:['dex','int']},Mago:{hd:6,sv:['int','wis'],sp:'int'},Monaco:{hd:8,sv:['str','dex'],sp:'wis'},Paladino:{hd:10,sv:['wis','cha'],sp:'cha'},Ranger:{hd:10,sv:['str','dex'],sp:'wis'},Stregone:{hd:6,sv:['con','cha'],sp:'cha'},Warlock:{hd:8,sv:['wis','cha'],sp:'cha'}};
+function clsKey(){const v=String(data.cls||'').trim().toLowerCase();return Object.keys(CLS).find(c=>c.toLowerCase()===v)||Object.keys(CLS).find(c=>v&&c.toLowerCase().startsWith(v))||ALIAS[v]||'';}
 const ALIAS={barbarian:'Barbaro',bard:'Bardo',cleric:'Chierico',druid:'Druido',fighter:'Guerriero',rogue:'Ladro',wizard:'Mago',monk:'Monaco',warlock:'Warlock',sorcerer:'Stregone'};
 const RACES=['Umano','Elfo','Nano','Halfling','Gnomo','Mezzelfo','Mezzorco','Tiefling','Dragonide'];
 const TABS=[['base','Base'],['cmb','Combattimento'],['mag','Magia'],['trt','Tratti'],['eq','Equip.'],['sto','Storia']];
@@ -4729,10 +4749,12 @@ function tpl(t){
  <div class="sh-card"><h4>Chi sei</h4><div class="sh-grid">
   ${F('cn','Nome personaggio')}
   <label class="sh-f"><span>Classe</span><input data-k="cls" data-t="s" list="sh-cls"></label>
+  <label class="sh-f"><span>Sottoclasse / archetipo</span><input data-k="sub" data-t="s" list="sh-sub" placeholder="scegli o scrivi"></label>
   ${F('lvl','Livello','n')}<label class="sh-f"><span>Razza</span><input data-k="race" data-t="s" list="sh-races"></label>
   ${F('bg','Background')}${F('al','Allineamento')}${F('xp','Punti esperienza','n')}
   ${F('pb','Bonus competenza','n','auto')}
  </div>
+ <datalist id="sh-sub"></datalist>
  <datalist id="sh-races">${RACES.map(c=>`<option>${c}</option>`).join('')}</datalist>
  <datalist id="sh-cls">${Object.keys(CLS).map(c=>`<option>${c}</option>`).join('')}</datalist>
  <div class="sh-row" style="margin-top:7px"><button type="button" class="sh-pill" data-act="cls">✨ Imposta dalla classe</button><button type="button" class="sh-pill" data-cy="insp" data-max="1" id="sh-insp">⭐ Ispirazione</button></div>
@@ -4815,6 +4837,7 @@ function derived(){
  b.querySelectorAll('[data-act="init"]').forEach(e=>e.textContent=sg(initB()));
  const dc=spDC(),sa=spAtk();set('dc',dc===''?'—':dc);
  b.querySelectorAll('[data-act="spatk"]').forEach(e=>e.textContent=sa===''?'—':sg(sa));
+ const dl=$('sh-sub');if(dl){const k=clsKey(),h=((SUBS[k]||[]).concat([GUN])).map(x=>`<option value="${x}">`).join('');if(dl.dataset.k!==k){dl.dataset.k=k;dl.innerHTML=h;}}
  const pb=$('sh-body').querySelector('[data-k="pb"]');if(pb)pb.placeholder='auto '+sg(Math.ceil(Math.max(1,num('lvl',1))/4)+1);
  b.querySelectorAll('[data-cy]').forEach(e=>{const v=num(e.dataset.cy);e.className=(e.id==='sh-insp'?'sh-pill':'sh-cy')+(v?(e.id==='sh-insp'?' on':' p'+v):'');
   if(e.id!=='sh-insp')e.textContent=v===2?'◆':v===1?'●':'';});
@@ -4824,14 +4847,15 @@ function derived(){
   if(p.innerHTML!==h)p.innerHTML=h;
  });
 }
+const typing=c=>{const e=document.activeElement;return !!(e&&c.contains(e)&&/^(INPUT|TEXTAREA|SELECT)$/.test(e.tagName));};
 function lists(){
  const a=$('sh-atk');
- if(a&&(rendered.atk!==data.atk||!a.innerHTML)&&!a.contains(document.activeElement)){
+ if(a&&(rendered.atk!==data.atk||!a.innerHTML)&&!typing(a)){
   rendered.atk=data.atk;
   a.innerHTML=L('atk').map((x,i)=>`<div class="sh-row"><input data-li="atk" data-i="${i}" data-f="n" placeholder="Arma" value="${esc(x.n)}"><input class="s" data-li="atk" data-i="${i}" data-f="b" placeholder="+5" value="${esc(x.b)}"><button type="button" class="sh-roll" data-act="atkroll" data-i="${i}" title="Tira per colpire">🎯</button><input data-li="atk" data-i="${i}" data-f="d" placeholder="1d8+3 tagliente" value="${esc(x.d)}"><button type="button" class="sh-roll" data-act="dmgroll" data-i="${i}" title="Tira il danno">💥</button><button type="button" class="sh-x" data-act="atk-" data-i="${i}">✕</button></div>`).join('')||'<div class="sh-note">Nessun attacco: aggiungine uno.</div>';
  }
  const s=$('sh-sp');
- if(s&&(rendered.sp!==data.sp||!s.innerHTML)&&!s.contains(document.activeElement)){
+ if(s&&(rendered.sp!==data.sp||!s.innerHTML)&&!typing(s)){
   rendered.sp=data.sp;
   const arr=L('sp');let h='';
   for(let l=0;l<=9;l++){
@@ -4939,8 +4963,7 @@ box.addEventListener('click',e=>{
   case 'sp-p':{const x=L('sp');if(x[i]){x[i].p=x[i].p?0:1;saveL('sp',x,true);rendered.sp=undefined;lists();}break;}
   case 'inv':close();if(window.invOpen)invOpen();break;
   case 'cls':{
-   let v=String(data.cls||'').trim().toLowerCase();
-   const key=Object.keys(CLS).find(c=>c.toLowerCase()===v)||Object.keys(CLS).find(c=>v&&c.toLowerCase().startsWith(v))||ALIAS[v];
+   const key=clsKey();
    if(!key){showRoll('Classe non riconosciuta. Scegline una dall’elenco (Barbaro, Bardo, Chierico…).');break;}
    const c=CLS[key];put('cls',key,true);put('hd_die','d'+c.hd,true);
    if(!data.hd_tot)put('hd_tot',num('lvl',1),true);
